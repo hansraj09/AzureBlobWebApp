@@ -1,5 +1,8 @@
-using AzureBlobWebApp.Model;
+using System.Text;
+using AzureBlobWebApp.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +10,28 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("constring")));
+
+var _jwtsetting = builder.Configuration.GetSection("JWTSetting");
+builder.Services.Configure<JWTSetting>(_jwtsetting);
+
+var authkey = builder.Configuration.GetValue<string>("JWTSetting:SecurityKey");
+
+builder.Services.AddAuthentication(item =>
+{
+    item.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    item.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(item =>
+{
+    item.RequireHttpsMetadata = true;
+    item.SaveToken = true;
+    item.TokenValidationParameters = new TokenValidationParameters()
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authkey)),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
 
 var app = builder.Build();
 
@@ -17,6 +42,9 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 
 app.MapControllerRoute(

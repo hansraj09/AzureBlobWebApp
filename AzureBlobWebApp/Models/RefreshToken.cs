@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AzureBlobWebApp.Model;
+namespace AzureBlobWebApp.Models;
 
 public partial class RefreshToken
 {

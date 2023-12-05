@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace AzureBlobWebApp.Model;
+namespace AzureBlobWebApp.Models;
 
 public partial class AzureBlobWebAppDbContext : DbContext
 {
@@ -42,9 +42,7 @@ public partial class AzureBlobWebAppDbContext : DbContext
             entity.ToTable("Authorization");
 
             entity.Property(e => e.AuthorizationId).HasColumnName("AuthorizationID");
-            entity.Property(e => e.AuthorizationName)
-                .HasMaxLength(20)
-                .IsUnicode(false);
+            entity.Property(e => e.AuthorizationName).HasMaxLength(20);
             entity.Property(e => e.LastModified).HasColumnType("datetime");
             entity.Property(e => e.ModifiedUserId).HasColumnName("ModifiedUserID");
         });
@@ -153,6 +151,7 @@ public partial class AzureBlobWebAppDbContext : DbContext
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.LastModified).HasColumnType("datetime");
+            entity.Property(e => e.Password).HasMaxLength(50);
             entity.Property(e => e.UserName).HasMaxLength(100);
 
             entity.HasMany(d => d.Roles).WithMany(p => p.Users)
