@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace AzureBlobWebApp.Model;
+
+public partial class Role
+{
+    public int RoleId { get; set; }
+
+    public string RoleName { get; set; } = null!;
+
+    public DateTime LastModified { get; set; }
+
+    public int? ModifiedUserId { get; set; }
+
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
+}
