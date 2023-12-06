@@ -1,5 +1,7 @@
 using System.Text;
+using AzureBlobWebApp;
 using AzureBlobWebApp.Models;
+using AzureBlobWebApp.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("constring")));
+
+var _dbcontext = builder.Services.BuildServiceProvider().GetService<AzureBlobWebAppDbContext>();
+
+builder.Services.AddSingleton<IUserService>(provider => new UserService(_dbcontext));
 
 var _jwtsetting = builder.Configuration.GetSection("JWTSetting");
 builder.Services.Configure<JWTSetting>(_jwtsetting);
