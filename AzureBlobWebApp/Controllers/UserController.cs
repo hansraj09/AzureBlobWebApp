@@ -1,6 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using AzureBlobWebApp.Models;
 using AzureBlobWebApp.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -95,6 +96,10 @@ namespace AzureBlobWebApp.Controllers
 
             //var username = principal.Identity.Name;
             var _reftable = _context.RefreshTokens.FirstOrDefault(o => o.UserId == userId && o.Token == token.RefreshToken);
+
+            //var roles = _context.Users.Where(u => u.UserId == userId).Single().Roles;
+            //var serializedRoles = JsonSerializer.Serialize(roles);
+
             if (_reftable == null)
             {
                 return Unauthorized("UserId or Refresh Token do not match on server");

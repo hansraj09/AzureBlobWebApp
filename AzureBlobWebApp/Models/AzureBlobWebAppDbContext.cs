@@ -104,7 +104,7 @@ public partial class AzureBlobWebAppDbContext : DbContext
             entity.ToTable("RefreshToken");
 
             entity.Property(e => e.TokenId).HasColumnName("TokenID");
-            entity.Property(e => e.Token);
+            entity.Property(e => e.Token).HasMaxLength(500);
             entity.Property(e => e.UserId).HasColumnName("UserID");
 
             entity.HasOne(d => d.User).WithMany(p => p.RefreshTokens)
