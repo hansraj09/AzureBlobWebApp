@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Data;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -6,6 +7,7 @@ using AzureBlobWebApp.Models;
 using AzureBlobWebApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -49,24 +51,32 @@ namespace AzureBlobWebApp.Controllers
         public IActionResult Authenticate([FromBody] UserCredential userCred)
         {
             TokenResponse tokenResponse = new TokenResponse();
-            var _user = _context.Users.FirstOrDefault(user => user.UserName == userCred.UserName && user.Password == userCred.Password);
+            // include fetches the roles from the Role table with matching fields in UserRole table
+            // filter first then fetch the data from other tables with foreign key references to avoid querying all users
+            // or use lazy loading by adding .UseLazyLoadingProxies() in Program.cs
+            var _user = _context.Users
+                                .Where(user => user.UserName == userCred.UserName && user.Password == userCred.Password)
+                                //.Include(user => user.Roles)
+                                .FirstOrDefault();
             if (_user == null)
             {
                 return Unauthorized("Incorrect username or password");
             }
 
+            //var roles = _context.Users.Where(u => u.UserName == userCred.UserName).Single().Roles;
+            //var serializedRoles = JsonSerializer.Serialize(roles);
+
+            var _roles = _user.Roles.Select(role => role.RoleName);
+            var serializedRoles = JsonSerializer.Serialize(_roles);
+
             // create a new JWT token for the authenticated user
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenKey = Encoding.UTF8.GetBytes(_setting.SecurityKey);
+            var claims = _roles.Select(_role => new Claim(ClaimTypes.Role, _role));
+            claims = claims.Append(new Claim(ClaimTypes.Name, _user.UserName));
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(
-                    new Claim[]
-                    {
-                        new Claim(ClaimTypes.Name, _user.UserName),
-                        new Claim(ClaimTypes.Role, _user.Roles.ToString())
-                    }
-                ),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.Now.AddMinutes(2),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256)
             };
@@ -97,8 +107,6 @@ namespace AzureBlobWebApp.Controllers
             //var username = principal.Identity.Name;
             var _reftable = _context.RefreshTokens.FirstOrDefault(o => o.UserId == userId && o.Token == token.RefreshToken);
 
-            //var roles = _context.Users.Where(u => u.UserId == userId).Single().Roles;
-            //var serializedRoles = JsonSerializer.Serialize(roles);
 
             if (_reftable == null)
             {
@@ -110,12 +118,12 @@ namespace AzureBlobWebApp.Controllers
 
         // Basic endpoint to demonstrate authorization
         // if the user is authenticated, then display the User table
-        [Authorize]
+        [Authorize(Roles ="admin")]
         [Route("GetUsers")]
         [HttpGet]
-        public IEnumerable<User> GetUsers()
+        public IEnumerable<string> GetUsers()
         {
-            return _context.Users.ToList();
+            return _context.Users.Select(u => u.UserName).ToList();
         }
     }
 }

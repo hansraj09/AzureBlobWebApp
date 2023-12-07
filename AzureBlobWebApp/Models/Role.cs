@@ -13,5 +13,7 @@ public partial class Role
 
     public int? ModifiedUserId { get; set; }
 
+    public virtual ICollection<Authorization> Authorizations { get; set; } = new List<Authorization>();
+
     public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

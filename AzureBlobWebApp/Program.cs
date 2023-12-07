@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("constring")));
+builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("constring")));
 
 var _dbcontext = builder.Services.BuildServiceProvider().GetService<AzureBlobWebAppDbContext>();
 
