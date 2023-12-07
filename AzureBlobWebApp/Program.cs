@@ -5,6 +5,7 @@ using AzureBlobWebApp.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,16 @@ builder.Services.AddAuthentication(item =>
     };
 });
 
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("api", new OpenApiInfo()
+    {
+        Description = "Azure Blob operations API with crud operations",
+        Title = "User",
+        Version = "1"
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -52,6 +63,16 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("api/swagger.json", "User"));
+
+app.UseCors(builder =>
+{
+    builder
+    .WithOrigins("http://localhost:44417/")
+    .AllowAnyMethod()
+    .AllowAnyHeader();
+});
 
 app.MapControllerRoute(
     name: "default",

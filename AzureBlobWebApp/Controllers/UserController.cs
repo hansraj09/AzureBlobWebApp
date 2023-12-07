@@ -116,6 +116,36 @@ namespace AzureBlobWebApp.Controllers
             return Ok(_result);
         }
 
+        [HttpPost("Register")]
+        public IActionResult Register([FromBody] User userInfo)
+        {
+            try
+            {
+                var _user = _context.Users.FirstOrDefault(o => o.UserName == userInfo.UserName);
+                if (_user != null)
+                {
+                    return Conflict("User already exists");
+                }
+                else
+                {
+                    User tblUser = new User()
+                    {
+                        UserName = userInfo.UserName,
+                        Email = userInfo.Email,
+                        Password = userInfo.Password,
+                        
+                    };
+                    _context.Users.Add(tblUser);
+                    _context.SaveChanges();
+                    return Ok("User successfully created");
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         // Basic endpoint to demonstrate authorization
         // if the user is authenticated, then display the User table
         [Authorize(Roles ="admin")]
