@@ -116,6 +116,7 @@ namespace AzureBlobWebApp.Controllers
             return Ok(_result);
         }
 
+        [AllowAnonymous]
         [HttpPost("Register")]
         public IActionResult Register([FromBody] User userInfo)
         {
@@ -128,13 +129,20 @@ namespace AzureBlobWebApp.Controllers
                 }
                 else
                 {
+                    // get 'user' role
+                    var _userRole = _context.Roles.Where(r => r.RoleId == 2).FirstOrDefault();
+                    if (_userRole == null)
+                    {
+                        throw new Exception("No user role found");
+                    }
                     User tblUser = new User()
                     {
                         UserName = userInfo.UserName,
                         Email = userInfo.Email,
                         Password = userInfo.Password,
-                        
+                        LastModified = DateTime.Now,
                     };
+                    tblUser.Roles.Add(_userRole);
                     _context.Users.Add(tblUser);
                     _context.SaveChanges();
                     return Ok("User successfully created");
