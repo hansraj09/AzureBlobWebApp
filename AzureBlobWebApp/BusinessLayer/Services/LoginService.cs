@@ -1,34 +1,25 @@
-﻿using System.Data;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
 using AzureBlobWebApp.DataLayer.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace AzureBlobWebApp.API.Controllers
+namespace AzureBlobWebApp.BusinessLayer.Services
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class UserController : ControllerBase
+    public class LoginService : ILoginService
     {
-        private readonly AzureBlobWebAppDbContext _context;
         private readonly JWTSetting _setting;
-        private readonly IUserService _userService;
-
-        public UserController(AzureBlobWebAppDbContext azureBlobWebAppDb, IOptions<JWTSetting> options, IUserService userService)
+        public LoginService(IOptions<JWTSetting> options)
         {
-            _context = azureBlobWebAppDb;
             _setting = options.Value;
-            _userService = userService;
         }
-
-        [NonAction]
         public TokenResponse Authenticate(string username, Claim[] claims)
         {
             TokenResponse tokenResponse = new TokenResponse();
@@ -40,15 +31,12 @@ namespace AzureBlobWebApp.API.Controllers
 
                 );
             tokenResponse.JWTToken = new JwtSecurityTokenHandler().WriteToken(tokenhandler);
-            tokenResponse.RefreshToken = _userService.GenerateToken(username);
+            tokenResponse.RefreshToken = GenerateToken(username);
 
             return tokenResponse;
         }
 
-
-        [Route("Authenticate")]
-        [HttpPost]
-        public IActionResult Authenticate([FromBody] UserCredential userCred)
+        public TokenResponse Authenticate([FromBody] UserCredential userCred)
         {
             TokenResponse tokenResponse = new TokenResponse();
             // include fetches the roles from the Role table with matching fields in UserRole table
@@ -60,7 +48,11 @@ namespace AzureBlobWebApp.API.Controllers
                                 .FirstOrDefault();
             if (_user == null)
             {
-                return Unauthorized("Incorrect username or password");
+                return new()
+                {
+                    StatusCode = HttpStatusCode.BadRequest,
+                    StatusMessage = "Incorrect username or password"
+                };
             }
 
             //var roles = _context.Users.Where(u => u.UserName == userCred.UserName).Single().Roles;
@@ -84,84 +76,111 @@ namespace AzureBlobWebApp.API.Controllers
             string finaltoken = tokenHandler.WriteToken(token);
 
             tokenResponse.JWTToken = finaltoken;
-            tokenResponse.RefreshToken = _userService.GenerateToken(_user.UserName);
+            tokenResponse.RefreshToken = GenerateToken(_user.UserName);
 
-            return Ok(tokenResponse);
+            return tokenResponse;
         }
 
-        [Route("Refresh")]
-        [HttpPost]
-        public IActionResult Refresh([FromBody] TokenResponse token)
+        public TokenResponse Refresh([FromBody] TokenResponse token)
         {
-
             var tokenHandler = new JwtSecurityTokenHandler();
             var securityToken = (JwtSecurityToken)tokenHandler.ReadToken(token.JWTToken);
             var username = securityToken.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value;
-            var userId = _userService.GetUserIdFromUsername(username);
+            var userId = GetUserIdFromUsername(username);
             if (userId == -1)
             {
-                throw new Exception("Username has no corresponding UserId");
+                return new()
+                {
+                    StatusCode = HttpStatusCode.NotFound,
+                    StatusMessage = "Username has no corresponding UserId"
+                };
             }
 
-            
-            //var username = principal.Identity.Name;
             var _reftable = _context.RefreshTokens.FirstOrDefault(o => o.UserId == userId && o.Token == token.RefreshToken);
-
-
             if (_reftable == null)
             {
-                return Unauthorized("UserId or Refresh Token do not match on server");
+                return new()
+                {
+                    StatusCode = HttpStatusCode.NotFound,
+                    StatusMessage = "UserId or Refresh Token do not match on server"
+                };
             }
             TokenResponse _result = Authenticate(username, securityToken.Claims.ToArray());
-            return Ok(_result);
+            return _result;
         }
 
-        [AllowAnonymous]
-        [HttpPost("Register")]
-        public IActionResult Register([FromBody] User userInfo)
+        public ResponseBase Register([FromBody] User userInfo)
         {
-            try
+            var _user = _context.Users.FirstOrDefault(o => o.UserName == userInfo.UserName);
+            if (_user != null)
             {
-                var _user = _context.Users.FirstOrDefault(o => o.UserName == userInfo.UserName);
-                if (_user != null)
+                return new ()
                 {
-                    return Conflict("User already exists");
+                    StatusCode = HttpStatusCode.Conflict,
+                    StatusMessage = "User already exists"
+                };
+            }
+            else
+            {
+                // get 'user' role
+                var _userRole = _context.Roles.Where(r => r.RoleId == 2).FirstOrDefault();
+                if (_userRole == null)
+                {
+                    return new ()
+                    {
+                        StatusCode = HttpStatusCode.NotFound,
+                        StatusMessage = "No user role found"
+                    };
+                }
+                User tblUser = new User()
+                {
+                    UserName = userInfo.UserName,
+                    Email = userInfo.Email,
+                    Password = userInfo.Password,
+                    LastModified = DateTime.Now,
+                };
+                tblUser.Roles.Add(_userRole);
+                _context.Users.Add(tblUser);
+                _context.SaveChanges();
+                return new();
+            }
+        }
+
+
+        public string GenerateToken(string username)
+        {
+            var randomnumber = new byte[32];
+            using (var randomnumbergenerator = RandomNumberGenerator.Create())
+            {
+                randomnumbergenerator.GetBytes(randomnumber);
+                string RefreshToken = Convert.ToBase64String(randomnumber);
+
+                var _userId = GetUserIdFromUsername(username);
+                if (_userId == -1)
+                {
+                    throw new Exception("Username has no corresponding Id");
+                }
+
+                var _refreshUser = _context.RefreshTokens.FirstOrDefault(o => o.UserId == _userId);
+                if (_refreshUser != null)
+                {
+                    _refreshUser.Token = RefreshToken;
+                    _context.SaveChanges();
                 }
                 else
                 {
-                    // get 'user' role
-                    var _userRole = _context.Roles.Where(r => r.RoleId == 2).FirstOrDefault();
-                    if (_userRole == null)
+                    RefreshToken tblRefreshtoken = new RefreshToken()
                     {
-                        throw new Exception("No user role found");
-                    }
-                    User tblUser = new User()
-                    {
-                        UserName = userInfo.UserName,
-                        Email = userInfo.Email,
-                        Password = userInfo.Password,
-                        LastModified = DateTime.Now,
+                        UserId = _userId,
+                        Token = RefreshToken,
+                        IsActive = true
                     };
-                    tblUser.Roles.Add(_userRole);
-                    _context.Users.Add(tblUser);
+                    _context.RefreshTokens.Add(tblRefreshtoken);
                     _context.SaveChanges();
-                    return Ok("User successfully created");
                 }
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
 
-        // Basic endpoint to demonstrate authorization
-        // if the user is authenticated, then display the User table
-        [Authorize(Roles = "admin")]
-        [Route("GetUsers")]
-        [HttpGet]
-        public IEnumerable<string> GetUsers()
-        {
-            return _context.Users.Select(u => u.UserName).ToList();
+                return RefreshToken;
+            }
         }
     }
 }
