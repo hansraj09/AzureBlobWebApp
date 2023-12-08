@@ -1,4 +1,4 @@
-﻿namespace AzureBlobWebApp.Services
+﻿namespace AzureBlobWebApp.BusinessLayer.Interfaces
 {
     public interface IUserService
     {

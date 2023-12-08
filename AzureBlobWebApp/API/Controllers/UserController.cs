@@ -3,15 +3,15 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using AzureBlobWebApp.Models;
-using AzureBlobWebApp.Services;
+using AzureBlobWebApp.BusinessLayer.DTOs;
+using AzureBlobWebApp.BusinessLayer.Interfaces;
+using AzureBlobWebApp.DataLayer.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace AzureBlobWebApp.Controllers
+namespace AzureBlobWebApp.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -21,7 +21,7 @@ namespace AzureBlobWebApp.Controllers
         private readonly JWTSetting _setting;
         private readonly IUserService _userService;
 
-        public UserController(AzureBlobWebAppDbContext azureBlobWebAppDb, IOptions<JWTSetting> options, IUserService userService) 
+        public UserController(AzureBlobWebAppDbContext azureBlobWebAppDb, IOptions<JWTSetting> options, IUserService userService)
         {
             _context = azureBlobWebAppDb;
             _setting = options.Value;
@@ -156,7 +156,7 @@ namespace AzureBlobWebApp.Controllers
 
         // Basic endpoint to demonstrate authorization
         // if the user is authenticated, then display the User table
-        [Authorize(Roles ="admin")]
+        [Authorize(Roles = "admin")]
         [Route("GetUsers")]
         [HttpGet]
         public IEnumerable<string> GetUsers()

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace AzureBlobWebApp.Models;
+﻿namespace AzureBlobWebApp.DataLayer.Models;
 
 public partial class RefreshToken
 {

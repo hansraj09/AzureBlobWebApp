@@ -1,7 +1,8 @@
 using System.Text;
-using AzureBlobWebApp;
-using AzureBlobWebApp.Models;
-using AzureBlobWebApp.Services;
+using AzureBlobWebApp.BusinessLayer.DTOs;
+using AzureBlobWebApp.BusinessLayer.Interfaces;
+using AzureBlobWebApp.BusinessLayer.Services;
+using AzureBlobWebApp.DataLayer.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;

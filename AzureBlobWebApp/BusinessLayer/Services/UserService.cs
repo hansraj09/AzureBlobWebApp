@@ -1,10 +1,10 @@
 ﻿using System.Security.Cryptography;
-using AzureBlobWebApp.Models;
-using Microsoft.EntityFrameworkCore;
+using AzureBlobWebApp.BusinessLayer.Interfaces;
+using AzureBlobWebApp.DataLayer.Models;
 
-namespace AzureBlobWebApp.Services
+namespace AzureBlobWebApp.BusinessLayer.Services
 {
-    public class UserService: IUserService
+    public class UserService : IUserService
     {
         private readonly AzureBlobWebAppDbContext _context;
         public UserService(AzureBlobWebAppDbContext dbContext)

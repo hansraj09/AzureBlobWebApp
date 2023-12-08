@@ -1,4 +1,4 @@
-﻿namespace AzureBlobWebApp.Models
+﻿namespace AzureBlobWebApp.BusinessLayer.DTOs
 {
     public class UserCredential
     {
