@@ -6,7 +6,9 @@ using System.Text;
 using System.Text.Json;
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
+using AzureBlobWebApp.DataLayer.DTOs;
 using AzureBlobWebApp.DataLayer.Models;
+using AzureBlobWebApp.DataLayer.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -15,10 +17,12 @@ namespace AzureBlobWebApp.BusinessLayer.Services
 {
     public class LoginService : ILoginService
     {
-        private readonly JWTSetting _setting;
-        public LoginService(IOptions<JWTSetting> options)
+        private readonly CJWTSetting _setting;
+        private readonly IDataRepository _dataRepository;
+        public LoginService(IOptions<CJWTSetting> options, IDataRepository dataRepository)
         {
             _setting = options.Value;
+            _dataRepository = dataRepository;
         }
         public TokenResponse Authenticate(string username, Claim[] claims)
         {
@@ -36,16 +40,9 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             return tokenResponse;
         }
 
-        public TokenResponse Authenticate([FromBody] UserCredential userCred)
+        public TokenResponse Authenticate([FromBody] CUserCredential userCred)
         {
-            TokenResponse tokenResponse = new TokenResponse();
-            // include fetches the roles from the Role table with matching fields in UserRole table
-            // filter first then fetch the data from other tables with foreign key references to avoid querying all users
-            // or use lazy loading by adding .UseLazyLoadingProxies() in Program.cs
-            var _user = _context.Users
-                                .Where(user => user.UserName == userCred.UserName && user.Password == userCred.Password)
-                                //.Include(user => user.Roles)
-                                .FirstOrDefault();
+            var _user = _dataRepository.GetUserByCredentials(userCred);
             if (_user == null)
             {
                 return new()
@@ -55,10 +52,7 @@ namespace AzureBlobWebApp.BusinessLayer.Services
                 };
             }
 
-            //var roles = _context.Users.Where(u => u.UserName == userCred.UserName).Single().Roles;
-            //var serializedRoles = JsonSerializer.Serialize(roles);
-
-            var _roles = _user.Roles.Select(role => role.RoleName);
+            var _roles = _dataRepository.GetRoleNamesForUser(userCred.UserName);
             var serializedRoles = JsonSerializer.Serialize(_roles);
 
             // create a new JWT token for the authenticated user
@@ -75,10 +69,11 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             string finaltoken = tokenHandler.WriteToken(token);
 
-            tokenResponse.JWTToken = finaltoken;
-            tokenResponse.RefreshToken = GenerateToken(_user.UserName);
-
-            return tokenResponse;
+            return new()
+            {
+                JWTToken = finaltoken,
+                RefreshToken = GenerateToken(_user.UserName)
+            };
         }
 
         public TokenResponse Refresh([FromBody] TokenResponse token)
@@ -86,7 +81,7 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             var tokenHandler = new JwtSecurityTokenHandler();
             var securityToken = (JwtSecurityToken)tokenHandler.ReadToken(token.JWTToken);
             var username = securityToken.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value;
-            var userId = GetUserIdFromUsername(username);
+            var userId = _dataRepository.GetUserIdFromUsername(username);
             if (userId == -1)
             {
                 return new()
@@ -96,7 +91,7 @@ namespace AzureBlobWebApp.BusinessLayer.Services
                 };
             }
 
-            var _reftable = _context.RefreshTokens.FirstOrDefault(o => o.UserId == userId && o.Token == token.RefreshToken);
+            var _reftable = _dataRepository.GetExistingRefreshTokenForUser(userId, token.RefreshToken);
             if (_reftable == null)
             {
                 return new()
@@ -111,8 +106,8 @@ namespace AzureBlobWebApp.BusinessLayer.Services
 
         public ResponseBase Register([FromBody] User userInfo)
         {
-            var _user = _context.Users.FirstOrDefault(o => o.UserName == userInfo.UserName);
-            if (_user != null)
+            var _userId = _dataRepository.GetUserIdFromUsername(userInfo.UserName);
+            if (_userId != -1)
             {
                 return new ()
                 {
@@ -122,30 +117,14 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             }
             else
             {
-                // get 'user' role
-                var _userRole = _context.Roles.Where(r => r.RoleId == 2).FirstOrDefault();
-                if (_userRole == null)
+                var response = _dataRepository.RegisterNewUser(userInfo);
+                if (response.StatusCode != HttpStatusCode.OK)
                 {
-                    return new ()
-                    {
-                        StatusCode = HttpStatusCode.NotFound,
-                        StatusMessage = "No user role found"
-                    };
+                    return response;
                 }
-                User tblUser = new User()
-                {
-                    UserName = userInfo.UserName,
-                    Email = userInfo.Email,
-                    Password = userInfo.Password,
-                    LastModified = DateTime.Now,
-                };
-                tblUser.Roles.Add(_userRole);
-                _context.Users.Add(tblUser);
-                _context.SaveChanges();
                 return new();
             }
         }
-
 
         public string GenerateToken(string username)
         {
@@ -155,32 +134,22 @@ namespace AzureBlobWebApp.BusinessLayer.Services
                 randomnumbergenerator.GetBytes(randomnumber);
                 string RefreshToken = Convert.ToBase64String(randomnumber);
 
-                var _userId = GetUserIdFromUsername(username);
-                if (_userId == -1)
-                {
-                    throw new Exception("Username has no corresponding Id");
-                }
+                var token = _dataRepository.AddOrUpdateRefreshToken(username, RefreshToken);
 
-                var _refreshUser = _context.RefreshTokens.FirstOrDefault(o => o.UserId == _userId);
-                if (_refreshUser != null)
+                if (token.StatusCode != HttpStatusCode.OK)
                 {
-                    _refreshUser.Token = RefreshToken;
-                    _context.SaveChanges();
-                }
-                else
-                {
-                    RefreshToken tblRefreshtoken = new RefreshToken()
-                    {
-                        UserId = _userId,
-                        Token = RefreshToken,
-                        IsActive = true
-                    };
-                    _context.RefreshTokens.Add(tblRefreshtoken);
-                    _context.SaveChanges();
+                    throw new Exception(token.StatusMessage);
                 }
 
                 return RefreshToken;
             }
+        }
+
+        // this is a temporary method to test the authorization functionality
+        // REMOVE LATER
+        public IEnumerable<string> GetAllUsers()
+        {
+            return _dataRepository.GetAllUsers();
         }
     }
 }

@@ -1,15 +1,11 @@
-﻿using System.Data;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
+﻿using System.Net;
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
+using AzureBlobWebApp.DataLayer.DTOs;
 using AzureBlobWebApp.DataLayer.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace AzureBlobWebApp.API.Controllers
 {
@@ -17,103 +13,52 @@ namespace AzureBlobWebApp.API.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly AzureBlobWebAppDbContext _context;
-        private readonly JWTSetting _setting;
-        private readonly IUserService _userService;
+        private readonly CJWTSetting _setting;
+        private readonly ILoginService _loginService;
 
-        public UserController(AzureBlobWebAppDbContext azureBlobWebAppDb, IOptions<JWTSetting> options, IUserService userService)
+        public UserController(IOptions<CJWTSetting> options, ILoginService loginService)
         {
-            _context = azureBlobWebAppDb;
             _setting = options.Value;
-            _userService = userService;
+            _loginService = loginService;
         }
-
-        [NonAction]
-        public TokenResponse Authenticate(string username, Claim[] claims)
-        {
-            TokenResponse tokenResponse = new TokenResponse();
-            var tokenkey = Encoding.UTF8.GetBytes(_setting.SecurityKey);
-            var tokenhandler = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(15),
-                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(tokenkey), SecurityAlgorithms.HmacSha256)
-
-                );
-            tokenResponse.JWTToken = new JwtSecurityTokenHandler().WriteToken(tokenhandler);
-            tokenResponse.RefreshToken = _userService.GenerateToken(username);
-
-            return tokenResponse;
-        }
-
 
         [Route("Authenticate")]
         [HttpPost]
-        public IActionResult Authenticate([FromBody] UserCredential userCred)
+        public IActionResult Authenticate([FromBody] CUserCredential userCred)
         {
-            TokenResponse tokenResponse = new TokenResponse();
-            // include fetches the roles from the Role table with matching fields in UserRole table
-            // filter first then fetch the data from other tables with foreign key references to avoid querying all users
-            // or use lazy loading by adding .UseLazyLoadingProxies() in Program.cs
-            var _user = _context.Users
-                                .Where(user => user.UserName == userCred.UserName && user.Password == userCred.Password)
-                                //.Include(user => user.Roles)
-                                .FirstOrDefault();
-            if (_user == null)
+            try
             {
-                return Unauthorized("Incorrect username or password");
+                var response = _loginService.Authenticate(userCred);
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    return BadRequest(response.StatusMessage);
+                }
+
+                return Ok(new CTokenResponse() { JWTToken = response.JWTToken, RefreshToken = response.RefreshToken });
             }
-
-            //var roles = _context.Users.Where(u => u.UserName == userCred.UserName).Single().Roles;
-            //var serializedRoles = JsonSerializer.Serialize(roles);
-
-            var _roles = _user.Roles.Select(role => role.RoleName);
-            var serializedRoles = JsonSerializer.Serialize(_roles);
-
-            // create a new JWT token for the authenticated user
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenKey = Encoding.UTF8.GetBytes(_setting.SecurityKey);
-            var claims = _roles.Select(_role => new Claim(ClaimTypes.Role, _role));
-            claims = claims.Append(new Claim(ClaimTypes.Name, _user.UserName));
-            var tokenDescriptor = new SecurityTokenDescriptor
+            catch (Exception ex)
             {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddMinutes(2),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256)
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            string finaltoken = tokenHandler.WriteToken(token);
-
-            tokenResponse.JWTToken = finaltoken;
-            tokenResponse.RefreshToken = _userService.GenerateToken(_user.UserName);
-
-            return Ok(tokenResponse);
+                return BadRequest(ex.Message);
+            }
         }
 
         [Route("Refresh")]
         [HttpPost]
         public IActionResult Refresh([FromBody] TokenResponse token)
         {
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var securityToken = (JwtSecurityToken)tokenHandler.ReadToken(token.JWTToken);
-            var username = securityToken.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value;
-            var userId = _userService.GetUserIdFromUsername(username);
-            if (userId == -1)
+            try
             {
-                throw new Exception("Username has no corresponding UserId");
+                var response = _loginService.Refresh(token);
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound(token.StatusMessage);
+                }
+                return Ok(new CTokenResponse() { JWTToken = response.JWTToken, RefreshToken = response.RefreshToken });
             }
-
-            
-            //var username = principal.Identity.Name;
-            var _reftable = _context.RefreshTokens.FirstOrDefault(o => o.UserId == userId && o.Token == token.RefreshToken);
-
-
-            if (_reftable == null)
+            catch (Exception ex)
             {
-                return Unauthorized("UserId or Refresh Token do not match on server");
-            }
-            TokenResponse _result = Authenticate(username, securityToken.Claims.ToArray());
-            return Ok(_result);
+                return BadRequest(ex.Message);
+            }      
         }
 
         [AllowAnonymous]
@@ -122,31 +67,12 @@ namespace AzureBlobWebApp.API.Controllers
         {
             try
             {
-                var _user = _context.Users.FirstOrDefault(o => o.UserName == userInfo.UserName);
-                if (_user != null)
+                var response = _loginService.Register(userInfo);
+                if (response.StatusCode == HttpStatusCode.Conflict)
                 {
-                    return Conflict("User already exists");
+                    return Conflict(response.StatusMessage);
                 }
-                else
-                {
-                    // get 'user' role
-                    var _userRole = _context.Roles.Where(r => r.RoleId == 2).FirstOrDefault();
-                    if (_userRole == null)
-                    {
-                        throw new Exception("No user role found");
-                    }
-                    User tblUser = new User()
-                    {
-                        UserName = userInfo.UserName,
-                        Email = userInfo.Email,
-                        Password = userInfo.Password,
-                        LastModified = DateTime.Now,
-                    };
-                    tblUser.Roles.Add(_userRole);
-                    _context.Users.Add(tblUser);
-                    _context.SaveChanges();
-                    return Ok("User successfully created");
-                }
+                return Ok("User has been successfully registered");
             }
             catch (Exception ex)
             {
@@ -154,14 +80,16 @@ namespace AzureBlobWebApp.API.Controllers
             }
         }
 
+
         // Basic endpoint to demonstrate authorization
         // if the user is authenticated, then display the User table
+        // TO BE REMOVED LATER
         [Authorize(Roles = "admin")]
         [Route("GetUsers")]
         [HttpGet]
         public IEnumerable<string> GetUsers()
         {
-            return _context.Users.Select(u => u.UserName).ToList();
+            return _loginService.GetAllUsers();
         }
     }
 }

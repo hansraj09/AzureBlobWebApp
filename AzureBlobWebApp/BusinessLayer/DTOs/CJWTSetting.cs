@@ -1,6 +1,6 @@
 ﻿namespace AzureBlobWebApp.BusinessLayer.DTOs
 {
-    public class JWTSetting
+    public class CJWTSetting
     {
         public string SecurityKey { get; set; }
     }

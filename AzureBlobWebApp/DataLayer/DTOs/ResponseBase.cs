@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace AzureBlobWebApp.BusinessLayer.DTOs
+namespace AzureBlobWebApp.DataLayer.DTOs
 {
     public class ResponseBase
     {

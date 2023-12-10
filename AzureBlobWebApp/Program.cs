@@ -3,6 +3,7 @@ using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
 using AzureBlobWebApp.BusinessLayer.Services;
 using AzureBlobWebApp.DataLayer.Models;
+using AzureBlobWebApp.DataLayer.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,12 +16,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("constring")));
 
-var _dbcontext = builder.Services.BuildServiceProvider().GetService<AzureBlobWebAppDbContext>();
+builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<IDataRepository, DataRepository>();
 
-builder.Services.AddSingleton<IUserService>(provider => new UserService(_dbcontext));
 
 var _jwtsetting = builder.Configuration.GetSection("JWTSetting");
-builder.Services.Configure<JWTSetting>(_jwtsetting);
+builder.Services.Configure<CJWTSetting>(_jwtsetting);
 
 var authkey = builder.Configuration.GetValue<string>("JWTSetting:SecurityKey");
 

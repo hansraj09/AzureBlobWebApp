@@ -1,6 +1,6 @@
 ﻿namespace AzureBlobWebApp.BusinessLayer.DTOs
 {
-    public class UserCredential
+    public class CUserCredential
     {
         public string UserName { get; set; }
         public string Password { get; set; }

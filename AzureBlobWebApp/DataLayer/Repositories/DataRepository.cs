@@ -1,11 +1,11 @@
 ﻿using System.Net;
 using AzureBlobWebApp.BusinessLayer.DTOs;
+using AzureBlobWebApp.DataLayer.DTOs;
 using AzureBlobWebApp.DataLayer.Models;
-using Microsoft.Extensions.Primitives;
 
 namespace AzureBlobWebApp.DataLayer.Repositories
 {
-    public class DataRepository
+    public class DataRepository: IDataRepository
     {
         private readonly AzureBlobWebAppDbContext _context;
         public DataRepository(AzureBlobWebAppDbContext dbcontext)
@@ -25,7 +25,7 @@ namespace AzureBlobWebApp.DataLayer.Repositories
             return _user.UserId;
         }
 
-        public User? GetUserByCredentials(UserCredential userCred)
+        public User? GetUserByCredentials(CUserCredential userCred)
         {
             return _context.Users.Where(user => user.UserName == userCred.UserName && user.Password == userCred.Password).FirstOrDefault();
         }
@@ -44,6 +44,31 @@ namespace AzureBlobWebApp.DataLayer.Repositories
                 throw new MissingFieldException("Incorrect username");
             }
             return _user.Roles.Select(role => role.RoleName);
+        }
+
+        public ResponseBase RegisterNewUser(User userInfo)
+        {
+            // get 'user' role
+            var _userRole = _context.Roles.Where(r => r.RoleId == 2).FirstOrDefault();
+            if (_userRole == null)
+            {
+                return new()
+                {
+                    StatusCode = HttpStatusCode.NotFound,
+                    StatusMessage = "No user role found"
+                };
+            }
+            User tblUser = new()
+            {
+                UserName = userInfo.UserName,
+                Email = userInfo.Email,
+                Password = userInfo.Password,
+                LastModified = DateTime.Now,
+            };
+            tblUser.Roles.Add(_userRole);
+            _context.Users.Add(tblUser);
+            _context.SaveChanges();
+            return new();
         }
 
         public ResponseBase AddOrUpdateRefreshToken(string username, string token)
@@ -75,6 +100,19 @@ namespace AzureBlobWebApp.DataLayer.Repositories
                 _context.SaveChanges();
             }
             return new();
+        }
+
+        public RefreshToken? GetExistingRefreshTokenForUser(int userId, string token)
+        {
+            return _context.RefreshTokens.FirstOrDefault(o => o.UserId == userId && o.Token == token);
+        }
+
+
+        // this is a temporary method to test the authorization functionality
+        // REMOVE LATER
+        public IEnumerable<string> GetAllUsers()
+        {
+            return _context.Users.Select(u => u.UserName).ToList();
         }
     }
 }
