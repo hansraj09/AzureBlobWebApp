@@ -1,3 +1,4 @@
+using Serilog;
 using System.Text;
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
@@ -14,14 +15,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("constring")));
+builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("Database")));
 
 builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<IAzureBlobService, AzureBlobService>();
 builder.Services.AddScoped<IDataRepository, DataRepository>();
 
 
 var _jwtsetting = builder.Configuration.GetSection("JWTSetting");
-builder.Services.Configure<CJWTSetting>(_jwtsetting);
+builder.Services.Configure<JWTSetting>(_jwtsetting);
+
+var _azureblobsetting = builder.Configuration.GetSection("AzureBlobSetting");
+builder.Services.Configure<AzureBlobSetting>(_azureblobsetting);
 
 var authkey = builder.Configuration.GetValue<string>("JWTSetting:SecurityKey");
 
@@ -42,6 +47,10 @@ builder.Services.AddAuthentication(item =>
     };
 });
 
+builder.Host.UseSerilog((ctx, lc) => lc
+    .WriteTo.Console()  //To write in Console 
+   .ReadFrom.Configuration(ctx.Configuration));
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("api", new OpenApiInfo()
@@ -53,6 +62,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

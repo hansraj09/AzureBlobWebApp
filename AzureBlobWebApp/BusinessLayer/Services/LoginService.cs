@@ -17,9 +17,9 @@ namespace AzureBlobWebApp.BusinessLayer.Services
 {
     public class LoginService : ILoginService
     {
-        private readonly CJWTSetting _setting;
+        private readonly JWTSetting _setting;
         private readonly IDataRepository _dataRepository;
-        public LoginService(IOptions<CJWTSetting> options, IDataRepository dataRepository)
+        public LoginService(IOptions<JWTSetting> options, IDataRepository dataRepository)
         {
             _setting = options.Value;
             _dataRepository = dataRepository;
