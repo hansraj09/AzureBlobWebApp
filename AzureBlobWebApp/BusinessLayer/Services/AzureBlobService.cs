@@ -1,5 +1,7 @@
-﻿using Azure.Storage;
+﻿using System.Net;
+using Azure.Storage;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
 using AzureBlobWebApp.DataLayer.DTOs;
@@ -23,10 +25,110 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             _blobServiceClient = new BlobServiceClient(new Uri(accountUri), credentials);
         }
 
-        public async Task CreateContainer(string userName)
+        public async Task CreateContainerIfNotExistsAsync(string username)
         {
-            var blobContainerClient = _blobServiceClient.GetBlobContainerClient(userName);
+            var blobContainerClient = _blobServiceClient.GetBlobContainerClient(username);
             await blobContainerClient.CreateIfNotExistsAsync();
+        }
+
+        public async Task<List<Blob>> GetAllBlobs(string username)
+        {
+            var blobContainerClient = _blobServiceClient.GetBlobContainerClient(username);
+            List<Blob> files = new List<Blob>();
+            string containerUri = blobContainerClient.Uri.ToString();
+
+            await foreach (var file in blobContainerClient.GetBlobsAsync())
+            {
+                files.Add(new Blob
+                {
+                    Uri = $"{blobContainerClient.Uri}/{file.Name}",
+                    Name = file.Name,
+                    ContentType = file.Properties.ContentType
+                });
+            }
+            return files;
+
+        }
+
+        /*public async Task UploadFileAsync(BlobContainerClient containerClient, string localFilePath)
+        {
+            string fileName = Path.GetFileName(localFilePath);
+            BlobClient blobClient = containerClient.GetBlobClient(fileName);
+
+            var validationOptions = new UploadTransferValidationOptions
+            {
+                ChecksumAlgorithm = StorageChecksumAlgorithm.Auto
+            };
+
+            var uploadOptions = new BlobUploadOptions()
+            {
+                TransferValidation = validationOptions
+            };
+
+            FileStream fileStream = File.OpenRead(localFilePath);
+            await blobClient.UploadAsync(fileStream, uploadOptions);
+            fileStream.Close();
+        }*/
+
+        public async Task<BlobResponse> UploadAsync(string username, IFormFile file)
+        {
+            try
+            {
+                var container = _blobServiceClient.GetBlobContainerClient(username);
+                BlobClient client = container.GetBlobClient(file.Name);
+
+                await using (Stream? data = file.OpenReadStream())
+                {
+                    await client.UploadAsync(data);
+                }
+                var response = new BlobResponse();
+                response.Blob.Uri = client.Uri.AbsoluteUri;
+                response.Blob.Name = client.Name;
+                return response;
+            }
+            catch (Azure.RequestFailedException ex)
+            {
+                return new() { StatusCode = HttpStatusCode.InternalServerError, StatusMessage = ex.Message };
+            }  
+        }
+
+        public async Task<Blob?> DownloadAsync(string blobName, string username)
+        {
+            var container = _blobServiceClient.GetBlobContainerClient(username);
+            BlobClient client = container.GetBlobClient(blobName);
+
+            if (await client.ExistsAsync())
+            {
+                var data = await client.OpenReadAsync();
+                Stream blobContent = data;
+
+                var content = await client.DownloadContentAsync();
+
+                return new Blob
+                {
+                    Content = blobContent,
+                    Name = blobName,
+                    ContentType = content.Value.Details.ContentType
+                };
+            }
+            return null;
+        }
+
+        public async Task<BlobResponse> DeleteAsync(string blobName, string username)
+        {
+            try
+            {
+                var container = _blobServiceClient.GetBlobContainerClient(username);
+                BlobClient client = container.GetBlobClient(blobName);
+
+                await client.DeleteAsync();
+
+                return new();
+            }
+            catch (Azure.RequestFailedException ex)
+            {
+                return new() { StatusCode = HttpStatusCode.InternalServerError, StatusMessage = ex.Message };
+            }
         }
 
         public async Task<IEnumerable<string>> ListBlobContainersAsync()
