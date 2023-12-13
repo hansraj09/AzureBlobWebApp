@@ -1,5 +1,4 @@
-﻿using System.Net;
-using AzureBlobWebApp.DataLayer.DTOs;
+﻿using AzureBlobWebApp.DataLayer.DTOs;
 
 namespace AzureBlobWebApp.BusinessLayer.DTOs
 {

@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AzureBlobWebApp.API.Controllers
@@ -9,28 +11,35 @@ namespace AzureBlobWebApp.API.Controllers
     public class BlobController : ControllerBase
     {
         private readonly IAzureBlobService _azureBlobService;
+        private readonly ITokenService _tokenService;
 
-        public BlobController(IAzureBlobService azureBlobService)
+        public BlobController(IAzureBlobService azureBlobService, ITokenService tokenService)
         {
             _azureBlobService = azureBlobService;
+            _tokenService = tokenService;
         }
+
 
         [Route("GetContainers")]
         [HttpGet]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> GetAllContainers()
         {
             var response = await _azureBlobService.ListBlobContainersAsync();
             return Ok(response);
         }
 
-        // ************************ Get token from body ***********************
-        // authenticate token for user
-        // get username from token
-
 
         [HttpPost]
-        public async Task<IActionResult> Upload(string username, IFormFile file)
+        [Authorize]
+        public async Task<IActionResult> Upload(IFormFile file)
         {
+            var token = await HttpContext.GetTokenAsync("access_token");
+            var username = _tokenService.GetUsername(token);
+            if (username == null)
+            {
+                return Unauthorized();
+            }
             var response = await _azureBlobService.UploadAsync(username, file);
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -43,11 +52,18 @@ namespace AzureBlobWebApp.API.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         [Route("filename")]
-        public async Task<IActionResult> Download(string username, string filename)
+        public async Task<IActionResult> Download(string filename)
         {
             try
             {
+                var token = await HttpContext.GetTokenAsync("access_token");
+                var username = _tokenService.GetUsername(token);
+                if (username == null)
+                {
+                    return Unauthorized();
+                }
                 var result = await _azureBlobService.DownloadAsync(filename, username);
                 if (result == null)
                 {
@@ -55,16 +71,23 @@ namespace AzureBlobWebApp.API.Controllers
                 }
                 return File(result.Content, result.ContentType, result.Name);
             }
-            catch (Azure.RequestFailedException ex)
+            catch (Azure.RequestFailedException)
             {
                 return StatusCode(500, "Download failed");
             }
         }
 
         [HttpDelete]
+        [Authorize]
         [Route("filename")]
-        public async Task<IActionResult> Delete(string filename, string username) 
+        public async Task<IActionResult> Delete(string filename) 
         {
+            var token = await HttpContext.GetTokenAsync("access_token");
+            var username = _tokenService.GetUsername(token);
+            if (username == null)
+            {
+                return Unauthorized();
+            }
             var response = await _azureBlobService.DeleteAsync(filename, username);
             if (response.StatusCode == HttpStatusCode.OK)
             {

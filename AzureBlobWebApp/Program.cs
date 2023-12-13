@@ -18,6 +18,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("Database")));
 
 builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAzureBlobService, AzureBlobService>();
 builder.Services.AddScoped<IDataRepository, DataRepository>();
 
@@ -59,16 +60,46 @@ builder.Services.AddSwaggerGen(options =>
         Title = "User",
         Version = "1"
     });
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = @"JWT Authorization header using the Bearer scheme. \r\n\r\n 
+                      Enter 'Bearer' [space] and then your token in the text input below.
+                      \r\n\r\nExample: 'Bearer 12345abcdef'",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+      {
+        {
+          new OpenApiSecurityScheme
+          {
+            Reference = new OpenApiReference
+              {
+                Type = ReferenceType.SecurityScheme,
+                Id = "Bearer"
+              },
+              Scheme = "oauth2",
+              Name = "Bearer",
+              In = ParameterLocation.Header,
+
+            },
+            new List<string>()
+          }
+        });
 });
 
 var app = builder.Build();
 
-app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
 }
+
+app.UseSerilogRequestLogging();
 
 app.UseStaticFiles();
 app.UseRouting();
@@ -77,7 +108,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("api/swagger.json", "User"));
+app.UseSwaggerUI(c => c.SwaggerEndpoint("api/swagger.json", "Endpoints"));
 
 app.UseCors(builder =>
 {

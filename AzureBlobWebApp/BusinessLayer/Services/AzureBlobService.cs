@@ -1,10 +1,8 @@
 ﻿using System.Net;
 using Azure.Storage;
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
-using AzureBlobWebApp.DataLayer.DTOs;
 using AzureBlobWebApp.DataLayer.Repositories;
 using Microsoft.Extensions.Options;
 
@@ -15,10 +13,12 @@ namespace AzureBlobWebApp.BusinessLayer.Services
         private readonly AzureBlobSetting _setting;
         private readonly BlobServiceClient _blobServiceClient;
         private readonly IDataRepository _dataRepository;
-        public AzureBlobService(IOptions<AzureBlobSetting> options, IDataRepository dataRepository)
+        private readonly ILogger<AzureBlobService> _logger;
+        public AzureBlobService(IOptions<AzureBlobSetting> options, IDataRepository dataRepository, ILogger<AzureBlobService> logger)
         {
             _setting = options.Value;
             _dataRepository = dataRepository;
+            _logger = logger;
 
             var credentials = new StorageSharedKeyCredential(_setting.StorageAccount, _setting.AccessKey);
             var accountUri = $"https://{_setting.StorageAccount}.blob.core.windows.net";
@@ -33,6 +33,7 @@ namespace AzureBlobWebApp.BusinessLayer.Services
 
         public async Task<List<Blob>> GetAllBlobs(string username)
         {
+            await CreateContainerIfNotExistsAsync(username);
             var blobContainerClient = _blobServiceClient.GetBlobContainerClient(username);
             List<Blob> files = new List<Blob>();
             string containerUri = blobContainerClient.Uri.ToString();
@@ -47,35 +48,15 @@ namespace AzureBlobWebApp.BusinessLayer.Services
                 });
             }
             return files;
-
         }
-
-        /*public async Task UploadFileAsync(BlobContainerClient containerClient, string localFilePath)
-        {
-            string fileName = Path.GetFileName(localFilePath);
-            BlobClient blobClient = containerClient.GetBlobClient(fileName);
-
-            var validationOptions = new UploadTransferValidationOptions
-            {
-                ChecksumAlgorithm = StorageChecksumAlgorithm.Auto
-            };
-
-            var uploadOptions = new BlobUploadOptions()
-            {
-                TransferValidation = validationOptions
-            };
-
-            FileStream fileStream = File.OpenRead(localFilePath);
-            await blobClient.UploadAsync(fileStream, uploadOptions);
-            fileStream.Close();
-        }*/
 
         public async Task<BlobResponse> UploadAsync(string username, IFormFile file)
         {
             try
             {
+                await CreateContainerIfNotExistsAsync(username);
                 var container = _blobServiceClient.GetBlobContainerClient(username);
-                BlobClient client = container.GetBlobClient(file.Name);
+                BlobClient client = container.GetBlobClient(file.FileName);
 
                 await using (Stream? data = file.OpenReadStream())
                 {
@@ -88,6 +69,7 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             }
             catch (Azure.RequestFailedException ex)
             {
+                _logger.Log(LogLevel.Error, ex.Message);
                 return new() { StatusCode = HttpStatusCode.InternalServerError, StatusMessage = ex.Message };
             }  
         }
@@ -127,6 +109,7 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             }
             catch (Azure.RequestFailedException ex)
             {
+                _logger.Log(LogLevel.Error, ex.Message);
                 return new() { StatusCode = HttpStatusCode.InternalServerError, StatusMessage = ex.Message };
             }
         }
