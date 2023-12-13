@@ -1,3 +1,4 @@
+using Serilog;
 using System.Text;
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
@@ -14,14 +15,19 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("constring")));
+builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("Database")));
 
 builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAzureBlobService, AzureBlobService>();
 builder.Services.AddScoped<IDataRepository, DataRepository>();
 
 
 var _jwtsetting = builder.Configuration.GetSection("JWTSetting");
-builder.Services.Configure<CJWTSetting>(_jwtsetting);
+builder.Services.Configure<JWTSetting>(_jwtsetting);
+
+var _azureblobsetting = builder.Configuration.GetSection("AzureBlobSetting");
+builder.Services.Configure<AzureBlobSetting>(_azureblobsetting);
 
 var authkey = builder.Configuration.GetValue<string>("JWTSetting:SecurityKey");
 
@@ -42,6 +48,10 @@ builder.Services.AddAuthentication(item =>
     };
 });
 
+builder.Host.UseSerilog((ctx, lc) => lc
+    .WriteTo.Console()  //To write in Console 
+   .ReadFrom.Configuration(ctx.Configuration));
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("api", new OpenApiInfo()
@@ -50,14 +60,46 @@ builder.Services.AddSwaggerGen(options =>
         Title = "User",
         Version = "1"
     });
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = @"JWT Authorization header using the Bearer scheme. \r\n\r\n 
+                      Enter 'Bearer' [space] and then your token in the text input below.
+                      \r\n\r\nExample: 'Bearer 12345abcdef'",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+      {
+        {
+          new OpenApiSecurityScheme
+          {
+            Reference = new OpenApiReference
+              {
+                Type = ReferenceType.SecurityScheme,
+                Id = "Bearer"
+              },
+              Scheme = "oauth2",
+              Name = "Bearer",
+              In = ParameterLocation.Header,
+
+            },
+            new List<string>()
+          }
+        });
 });
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
 }
+
+app.UseSerilogRequestLogging();
 
 app.UseStaticFiles();
 app.UseRouting();
@@ -66,7 +108,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("api/swagger.json", "User"));
+app.UseSwaggerUI(c => c.SwaggerEndpoint("api/swagger.json", "Endpoints"));
 
 app.UseCors(builder =>
 {

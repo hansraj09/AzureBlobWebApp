@@ -5,20 +5,17 @@ using AzureBlobWebApp.DataLayer.DTOs;
 using AzureBlobWebApp.DataLayer.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace AzureBlobWebApp.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class LoginController : ControllerBase
     {
-        private readonly CJWTSetting _setting;
         private readonly ILoginService _loginService;
 
-        public UserController(IOptions<CJWTSetting> options, ILoginService loginService)
+        public LoginController(ILoginService loginService)
         {
-            _setting = options.Value;
             _loginService = loginService;
         }
 
