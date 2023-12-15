@@ -31,23 +31,32 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             await blobContainerClient.CreateIfNotExistsAsync();
         }
 
-        public async Task<List<Blob>> GetAllBlobs(string username)
+        public async Task<List<Blob>?> GetAllBlobsAsync(string username)
         {
-            await CreateContainerIfNotExistsAsync(username);
-            var blobContainerClient = _blobServiceClient.GetBlobContainerClient(username);
-            List<Blob> files = new List<Blob>();
-            string containerUri = blobContainerClient.Uri.ToString();
-
-            await foreach (var file in blobContainerClient.GetBlobsAsync())
+            try
             {
-                files.Add(new Blob
+                await CreateContainerIfNotExistsAsync(username);
+                var blobContainerClient = _blobServiceClient.GetBlobContainerClient(username);
+                List<Blob> files = new List<Blob>();
+                string containerUri = blobContainerClient.Uri.ToString();
+
+                await foreach (var file in blobContainerClient.GetBlobsAsync())
                 {
-                    Uri = $"{blobContainerClient.Uri}/{file.Name}",
-                    Name = file.Name,
-                    ContentType = file.Properties.ContentType
-                });
+                    files.Add(new Blob
+                    {
+                        Uri = $"{blobContainerClient.Uri}/{file.Name}",
+                        Name = file.Name,
+                        ContentType = file.Properties.ContentType
+                    });
+                }
+                return files;
             }
-            return files;
+            catch (Azure.RequestFailedException ex)
+            {
+                _logger.Log(LogLevel.Error, ex.Message);
+                return null;
+            } 
+            
         }
 
         public async Task<BlobResponse> UploadAsync(string username, IFormFile file)
