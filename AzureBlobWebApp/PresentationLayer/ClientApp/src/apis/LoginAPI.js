@@ -4,11 +4,9 @@ import { defineCancelApiObject } from "./configs/axiosUtils";
 
 const LoginAPI = {
     authenticate: async function (creds, cancel = false) {
-        const token = sessionStorage.getItem('JWTtoken')
         const response = await api.request({
-            url: "authenticate",
+            url: "login/authenticate",
             method: "POST",
-            headers: {"Authorization" : `Bearer ${token}`},
             data: creds,
             // retrieving the signal value by using the property name
             signal: cancel ? cancelApiObject[this.authenticate.name].handleRequestCancellation().signal : undefined,
@@ -18,7 +16,7 @@ const LoginAPI = {
     refresh: async function (cancel = false) {
         const token = sessionStorage.getItem('JWTtoken')
         const response = await api.request({
-            url: "refresh",
+            url: "login/refresh",
             method: "POST",
             headers: {"Authorization" : `Bearer ${token}`},
             signal: cancel ? cancelApiObject[this.refresh.name].handleRequestCancellation().signal : undefined,
@@ -28,7 +26,7 @@ const LoginAPI = {
     register: async function (userData, cancel = false) {
         const token = sessionStorage.getItem('JWTtoken')
         const response = await api.request({
-            url: "register",
+            url: "login/register",
             method: "POST",
             headers: {"Authorization" : `Bearer ${token}`},
             data: userData,
