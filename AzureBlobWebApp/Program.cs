@@ -96,8 +96,7 @@ var app = builder.Build();
 app.UseCors(builder =>
 {
     builder
-    .AllowAnyOrigin()
-    //.WithOrigins("http://localhost:44417")
+    .WithOrigins("http://localhost:44417")
     .AllowAnyMethod()
     .AllowAnyHeader();
 });
