@@ -29,10 +29,31 @@ namespace AzureBlobWebApp.API.Controllers
             return Ok(response);
         }
 
+        [Route("GetBlobs")]
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetAllBlobs()
+        {
+            var token = await HttpContext.GetTokenAsync("access_token");
+            var username = _tokenService.GetUsername(token);
+            if (username == null)
+            {
+                return Unauthorized();
+            }
+
+            var response = await _azureBlobService.GetAllBlobsAsync(username);
+            if (response == null)
+            {
+                return StatusCode(500, "Internal server error when loading files");
+            }
+            return Ok(response);
+        }
+
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> Upload(IFormFile file)
+        [Route("Upload")]
+        public async Task<IActionResult> Upload([FromForm] IFormFile file)
         {
             var token = await HttpContext.GetTokenAsync("access_token");
             var username = _tokenService.GetUsername(token);
@@ -54,7 +75,7 @@ namespace AzureBlobWebApp.API.Controllers
         [HttpGet]
         [Authorize]
         [Route("filename")]
-        public async Task<IActionResult> Download(string filename)
+        public async Task<IActionResult> Download([FromBody] string filename)
         {
             try
             {
@@ -80,7 +101,7 @@ namespace AzureBlobWebApp.API.Controllers
         [HttpDelete]
         [Authorize]
         [Route("filename")]
-        public async Task<IActionResult> Delete(string filename) 
+        public async Task<IActionResult> Delete([FromBody] string filename) 
         {
             var token = await HttpContext.GetTokenAsync("access_token");
             var username = _tokenService.GetUsername(token);

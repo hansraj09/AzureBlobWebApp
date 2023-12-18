@@ -93,6 +93,13 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+app.UseCors(builder =>
+{
+    builder
+    .WithOrigins("http://localhost:44417")
+    .AllowAnyMethod()
+    .AllowAnyHeader();
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -110,13 +117,6 @@ app.UseAuthorization();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("api/swagger.json", "Endpoints"));
 
-app.UseCors(builder =>
-{
-    builder
-    .WithOrigins("http://localhost:44417/")
-    .AllowAnyMethod()
-    .AllowAnyHeader();
-});
 
 app.MapControllerRoute(
     name: "default",
