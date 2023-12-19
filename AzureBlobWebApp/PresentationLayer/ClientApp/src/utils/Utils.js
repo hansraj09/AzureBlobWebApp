@@ -1,4 +1,5 @@
 import jwt_decode from "jwt-decode"; 
+import { toast } from 'react-toastify'
 
 export const GetUsernameFromToken = () => {
     const token = sessionStorage.getItem('JWTtoken')
@@ -28,13 +29,22 @@ function stringToColor(string) {
     /* eslint-enable no-bitwise */
   
     return color;
-  }
+}
 
-  export function stringAvatar(name) {
+export function stringAvatar(name) {
     return {
       sx: {
         bgcolor: stringToColor(name),
       },
       children: `${name.split(' ')[0][0]}`,
     };
-  }
+}
+
+export const toastOptions = {
+	position: toast.POSITION.TOP_CENTER,
+	autoClose: 3000, //3 seconds
+	hideProgressBar: false,
+	closeOnClick: true,
+	pauseOnHover: true,
+	draggable: true,
+}

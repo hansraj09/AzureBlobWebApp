@@ -1,4 +1,4 @@
-import  FileBrowser  from "./components/FileBrowser";
+import  FileBrowser  from "./pages/FileBrowser";
 
 const AppRoutes = [
   {

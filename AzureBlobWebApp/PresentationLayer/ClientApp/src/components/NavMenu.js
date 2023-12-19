@@ -41,7 +41,7 @@ const NavMenu = () => {
               <DropdownToggle nav>
                   <Avatar {...stringAvatar(getUsername())} />
               </DropdownToggle>
-              <DropdownMenu right>
+              <DropdownMenu end>
                 <DropdownItem>Settings</DropdownItem>
                 <DropdownItem divider />
                 <DropdownItem className='text-danger' onClick={handleSignOut}>Sign Out</DropdownItem>

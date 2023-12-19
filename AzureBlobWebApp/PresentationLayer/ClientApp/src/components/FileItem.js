@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
 import AudioFileIcon from '@mui/icons-material/AudioFile';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -11,13 +12,13 @@ import IconButton from '@mui/material/IconButton';
 import './FileItem.css'
 
 function IconType(type) {
-    if (type === 'img') {
+    if (type.includes('img')) {
         return <ImageIcon sx={{ width: 1, height: 1}} />
-    } else if (type === 'video') {
+    } else if (type.includes('video')) {
         return <VideoCameraBackIcon sx={{ width: 1, height: 1}} />
-    } else if (type === 'text') {
+    } else if (type.includes('text')) {
         return <TextSnippetIcon sx={{ width: 1, height: 1}} />
-    } else if (type === 'audio') {
+    } else if (type.includes('audio')) {
         return <AudioFileIcon sx={{ width: 1, height: 1}} />
     } else {
         return <InsertDriveFileIcon sx={{ width: 1, height: 1}} />
@@ -25,6 +26,11 @@ function IconType(type) {
 }
 
 const FileItem = (props) => {
+
+    const [open, setOpen] = useState(false)
+
+    const toggleModal = () => setOpen(!open)
+
   return (
     <div className='d-flex flex-column rounded-3 m-4 bg-main'>
         <div className='d-flex align-items-center justify-content-center'>
@@ -34,7 +40,7 @@ const FileItem = (props) => {
             <p className='fs-3'>{props.name}</p>
         </div>
         <div className='d-flex flex-row align-items-center justify-content-between m-3 icon'>
-            <IconButton color="secondary" aria-label="delete file">
+            <IconButton color="secondary" aria-label="delete file" onClick={toggleModal}>
                 <DeleteForeverIcon />
             </IconButton>
             <IconButton color="primary" aria-label="download file">
@@ -44,6 +50,25 @@ const FileItem = (props) => {
                 <ShareIcon />
             </IconButton>
         </div>
+        <Modal isOpen={open} toggle={toggleModal}>
+            <ModalHeader toggle={toggleModal}>Modal title</ModalHeader>
+            <ModalBody>
+            Are you sure you want to delete the file {props.name}?
+            </ModalBody>
+            <ModalFooter>
+            <Button color="danger" onClick={() => {
+                toggleModal()
+                props.onDelete(props.name)
+            }
+
+            }>
+                Delete
+            </Button>{' '}
+            <Button color="secondary" onClick={toggleModal}>
+                Cancel
+            </Button>
+            </ModalFooter>
+        </Modal>
     </div>
   )
 }

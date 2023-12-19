@@ -74,7 +74,7 @@ namespace AzureBlobWebApp.API.Controllers
 
         [HttpGet]
         [Authorize]
-        [Route("filename")]
+        [Route("Download")]
         public async Task<IActionResult> Download([FromBody] string filename)
         {
             try
@@ -100,7 +100,7 @@ namespace AzureBlobWebApp.API.Controllers
 
         [HttpDelete]
         [Authorize]
-        [Route("filename")]
+        [Route("Delete")]
         public async Task<IActionResult> Delete([FromBody] string filename) 
         {
             var token = await HttpContext.GetTokenAsync("access_token");

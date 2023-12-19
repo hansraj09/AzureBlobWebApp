@@ -1,10 +1,9 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Outlet, Route, Routes } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
-import { Layout } from './components/Layout';
 import './custom.css';
-import Login from './components/Login';
-import Register from './components/Register';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import NavMenu from './components/NavMenu';
 
 const App = () => {

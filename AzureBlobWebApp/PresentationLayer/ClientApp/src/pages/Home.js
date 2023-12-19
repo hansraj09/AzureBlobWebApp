@@ -1,10 +1,7 @@
 import React from 'react';
-import FileItem from './FileItem';
+import FileItem from '../components/FileItem';
 
 const Home = (props) => {
-
-
-
   return (
     <div className='d-flex flex-row flex-wrap'>
       <FileItem name="test name 1" type="img" />

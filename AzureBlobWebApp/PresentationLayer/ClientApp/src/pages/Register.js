@@ -3,6 +3,7 @@ import { Button, Spinner } from 'react-bootstrap'
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import LoginAPI from "../apis/LoginAPI";
+import { toastOptions } from "../utils/Utils";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -14,15 +15,6 @@ const Register = () => {
     const [loading, setLoading] = useState(false)
 
     const navigate = useNavigate()
-
-    const toastOptions = {
-        position: toast.POSITION.TOP_CENTER,
-        autoClose: 3000, //3 seconds
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-    }
 
     const IsValid = () => {
         let valid = true;
