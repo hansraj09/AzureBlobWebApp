@@ -32,7 +32,7 @@ const FileItem = (props) => {
     const toggleModal = () => setOpen(!open)
 
   return (
-    <div className='d-flex flex-column rounded-3 m-4 bg-main'>
+    <div className='d-flex flex-column rounded-3 m-4 bg-main' style={{ height:"fit-content" }}>
         <div className='d-flex align-items-center justify-content-center'>
             {IconType(props.type)}
         </div>
@@ -59,9 +59,7 @@ const FileItem = (props) => {
             <Button color="danger" onClick={() => {
                 toggleModal()
                 props.onDelete(props.name)
-            }
-
-            }>
+            }}>
                 Delete
             </Button>{' '}
             <Button color="secondary" onClick={toggleModal}>
