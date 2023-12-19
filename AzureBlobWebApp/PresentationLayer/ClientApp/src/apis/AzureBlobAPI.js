@@ -20,7 +20,8 @@ const AzureBlobAPI = {
         const response = await api.request({
             url: "blob/download",
             method: "GET",
-            headers: {"Authorization" : `Bearer ${token}`, 'Content-Type': 'application/json'},
+            headers: {"Authorization" : `Bearer ${token}`, 'Content-Type': 'application/octet-stream'},
+            responseType: 'blob',
             data: filename,
             signal: cancel ? cancelApiObject[this.download.name].handleRequestCancellation().signal : undefined,
         })

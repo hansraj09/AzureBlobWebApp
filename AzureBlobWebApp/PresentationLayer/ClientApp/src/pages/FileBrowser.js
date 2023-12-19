@@ -56,6 +56,26 @@ const FileBrowser = () => {
         await fetchData()
     }
 
+    const onDownload = async (filename) => {
+        try {
+            setLoading(true)
+            let file = await AzureBlobAPI.download(filename)
+            setLoading(false)
+            const element = document.createElement("a");
+            element.href = URL.createObjectURL(file);
+            element.download = filename;// simulate link click
+            document.body.appendChild(element); // Required for this to work in FireFox
+            element.click();
+            // clean up "a" element & remove ObjectURL
+            document.body.removeChild(element);
+            URL.revokeObjectURL(file);
+        } catch (error) {
+            setLoading(false)
+            toast.error(error.response.data || error.message, toastOptions)
+        }
+        
+    }
+
     return (
         <>
             <div className="d-flex flex-col w-100 vh-100">
@@ -63,7 +83,7 @@ const FileBrowser = () => {
                     <p className="d-flex flex-row justify-content-center vh-100 w-100 fs-1 align-items-center">No files found</p>
                 ) : (
                     files.map((file) => 
-                        <FileItem key={file} name={file.name} type={file.contentType} uri={file.uri} onDelete={onDelete} />
+                        <FileItem key={file} name={file.name} type={file.contentType} uri={file.uri} onDelete={onDelete} onDownload={onDownload} />
                     )                   
                 )}
                 <Fab color="primary" component="label" aria-label="add" sx={{

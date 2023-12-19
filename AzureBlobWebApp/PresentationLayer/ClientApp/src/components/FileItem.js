@@ -31,6 +31,7 @@ const FileItem = (props) => {
 
     const toggleModal = () => setOpen(!open)
 
+
   return (
     <div className='d-flex flex-column rounded-3 m-4 bg-main' style={{ height:"fit-content" }}>
         <div className='d-flex align-items-center justify-content-center'>
@@ -43,7 +44,7 @@ const FileItem = (props) => {
             <IconButton color="secondary" aria-label="delete file" onClick={toggleModal}>
                 <DeleteForeverIcon />
             </IconButton>
-            <IconButton color="primary" aria-label="download file">
+            <IconButton color="primary" aria-label="download file" onClick={() => {props.onDownload(props.name)}}>
                 <ArrowCircleDownIcon />
             </IconButton>
             <IconButton color="primary" aria-label="share file">
