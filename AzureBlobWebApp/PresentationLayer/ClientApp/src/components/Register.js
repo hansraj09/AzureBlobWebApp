@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Button, Spinner } from 'react-bootstrap'
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
+import LoginAPI from "../apis/LoginAPI";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-toastify/dist/ReactToastify.css';
-import LoginAPI from "../apis/LoginAPI";
 
 const Register = () => {
 
