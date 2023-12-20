@@ -72,7 +72,7 @@ namespace AzureBlobWebApp.API.Controllers
             return BadRequest(response);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Authorize]
         [Route("Download")]
         public async Task<IActionResult> Download([FromBody] string filename)

@@ -19,8 +19,8 @@ const AzureBlobAPI = {
         const token = sessionStorage.getItem('JWTtoken')
         const response = await api.request({
             url: "blob/download",
-            method: "GET",
-            headers: {"Authorization" : `Bearer ${token}`, 'Content-Type': 'application/octet-stream'},
+            method: "POST",
+            headers: {"Authorization" : `Bearer ${token}`, 'Content-Type': 'application/json'},
             responseType: 'blob',
             data: filename,
             signal: cancel ? cancelApiObject[this.download.name].handleRequestCancellation().signal : undefined,

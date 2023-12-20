@@ -59,7 +59,7 @@ const Register = () => {
 
     return (
         <div>
-            <div className="offset-lg-3 col-lg-6">
+            <div className="offset-lg-3 col-lg-6" style={{ marginTop: '100px' }}>
                 <form className="container">
                     <div className="card">
                         <div className="card-header">
