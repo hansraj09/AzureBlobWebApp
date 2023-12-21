@@ -8,7 +8,7 @@ const AzureBlobAPI = {
         const response = await api.request({
             url: "blob/upload",
             method: "POST",
-            headers: {"Authorization" : `Bearer ${token}`},
+            headers: {"Authorization" : `Bearer ${token}`, 'Content-Type': 'multipart/form-data'},
             data: formfile,
             // retrieving the signal value by using the property name
             signal: cancel ? cancelApiObject[this.upload.name].handleRequestCancellation().signal : undefined,
@@ -19,9 +19,10 @@ const AzureBlobAPI = {
         const token = sessionStorage.getItem('JWTtoken')
         const response = await api.request({
             url: "blob/download",
-            method: "GET",
-            headers: {"Authorization" : `Bearer ${token}`},
-            data: {filename: filename},
+            method: "POST",
+            headers: {"Authorization" : `Bearer ${token}`, 'Content-Type': 'application/json'},
+            responseType: 'blob',
+            data: filename,
             signal: cancel ? cancelApiObject[this.download.name].handleRequestCancellation().signal : undefined,
         })
         return response.data
@@ -31,8 +32,8 @@ const AzureBlobAPI = {
         const response = await api.request({
             url: "blob/delete",
             method: "DELETE",
-            headers: {"Authorization" : `Bearer ${token}`},
-            data: {filename: filename},
+            headers: {"Authorization" : `Bearer ${token}`, 'Content-Type': 'application/json'},
+            data: filename,
             signal: cancel ? cancelApiObject[this.delete.name].handleRequestCancellation().signal : undefined,
         })
         return response.data

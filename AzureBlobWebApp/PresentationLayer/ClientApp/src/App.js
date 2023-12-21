@@ -1,22 +1,30 @@
-import React, { Component } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import React from 'react';
+import { Outlet, Route, Routes } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
-import { Layout } from './components/Layout';
 import './custom.css';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import NavMenu from './components/NavMenu';
 
-export default class App extends Component {
-  static displayName = App.name;
-
-  render() {
-    return (
-      <Layout>
-        <Routes>
+const App = () => {
+  return (
+      <Routes>
+        <Route path='/' element={<Login />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/register' element={<Register />} />
+        <Route element={
+          <>
+            <NavMenu />
+            <Outlet />
+          </>
+        }>
           {AppRoutes.map((route, index) => {
             const { element, ...rest } = route;
             return <Route key={index} {...rest} element={element} />;
           })}
-        </Routes>
-      </Layout>
-    );
-  }
+        </Route>
+      </Routes>
+  );
 }
+
+export default App
