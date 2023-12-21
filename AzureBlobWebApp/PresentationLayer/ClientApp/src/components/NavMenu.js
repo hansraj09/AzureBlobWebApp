@@ -30,6 +30,10 @@ const NavMenu = () => {
     navigate('/login')
   }
 
+  const handleSettings = () => {
+    navigate('/settings')
+  }
+
   return (
     <header>
       <Navbar className="navbar-expand-sm navbar-toggleable-sm ng-white border-bottom box-shadow mb-3" container light>
@@ -42,7 +46,7 @@ const NavMenu = () => {
                   <Avatar {...stringAvatar(getUsername())} />
               </DropdownToggle>
               <DropdownMenu end>
-                <DropdownItem>Settings</DropdownItem>
+                <DropdownItem onClick={handleSettings}>Settings</DropdownItem>
                 <DropdownItem divider />
                 <DropdownItem className='text-danger' onClick={handleSignOut}>Sign Out</DropdownItem>
               </DropdownMenu>

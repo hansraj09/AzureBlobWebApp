@@ -82,8 +82,8 @@ const FileBrowser = () => {
                 {(files === null || files.length === 0) ? (
                     <p className="d-flex flex-row justify-content-center vh-100 w-100 fs-1 align-items-center">No files found</p>
                 ) : (
-                    files.map((file) => 
-                        <FileItem key={file} name={file.name} type={file.contentType} uri={file.uri} onDelete={onDelete} onDownload={onDownload} />
+                    files.map((file, index) => 
+                        <FileItem key={index} name={file.name} type={file.contentType} uri={file.uri} onDelete={onDelete} onDownload={onDownload} />
                     )                   
                 )}
                 <Fab color="primary" component="label" aria-label="add" sx={{

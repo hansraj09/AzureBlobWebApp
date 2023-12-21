@@ -90,14 +90,14 @@ namespace AzureBlobWebApp.BusinessLayer.Services
 
             if (await client.ExistsAsync())
             {
-                var data = await client.OpenReadAsync();
-                Stream blobContent = data;
+                //var data = await client.OpenReadAsync();
+                //Stream blobContent = data;
 
                 var content = await client.DownloadContentAsync();
 
                 return new Blob
                 {
-                    Content = blobContent,
+                    Content = content.Value.Content.ToStream(),
                     Name = blobName,
                     ContentType = content.Value.Details.ContentType
                 };
