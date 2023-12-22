@@ -41,7 +41,7 @@ namespace AzureBlobWebApp.API.Controllers
                 return Unauthorized();
             }
 
-            var response = await _azureBlobService.GetAllBlobsAsync(username);
+            var response = _azureBlobService.GetAllBlobs(username);
             if (response == null)
             {
                 return StatusCode(500, "Internal server error when loading files");
@@ -61,6 +61,7 @@ namespace AzureBlobWebApp.API.Controllers
             {
                 return Unauthorized();
             }
+            // look into chunks upload
             var response = await _azureBlobService.UploadAsync(username, file);
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -75,7 +76,7 @@ namespace AzureBlobWebApp.API.Controllers
         [HttpPost]
         [Authorize]
         [Route("Download")]
-        public async Task<IActionResult> Download([FromBody] string filename)
+        public async Task<IActionResult> Download([FromBody] string GUID)
         {
             try
             {
@@ -85,7 +86,7 @@ namespace AzureBlobWebApp.API.Controllers
                 {
                     return Unauthorized();
                 }
-                var result = await _azureBlobService.DownloadAsync(filename, username);
+                var result = await _azureBlobService.DownloadAsync(GUID, username);
                 if (result == null)
                 {
                     return BadRequest("File corrupted or does not exist");
@@ -101,7 +102,7 @@ namespace AzureBlobWebApp.API.Controllers
         [HttpDelete]
         [Authorize]
         [Route("Delete")]
-        public async Task<IActionResult> Delete([FromBody] string filename) 
+        public async Task<IActionResult> Delete([FromBody] string GUID) 
         {
             var token = await HttpContext.GetTokenAsync("access_token");
             var username = _tokenService.GetUsername(token);
@@ -109,7 +110,7 @@ namespace AzureBlobWebApp.API.Controllers
             {
                 return Unauthorized();
             }
-            var response = await _azureBlobService.DeleteAsync(filename, username);
+            var response = _azureBlobService.Delete(GUID, username);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok("File successfully deleted");

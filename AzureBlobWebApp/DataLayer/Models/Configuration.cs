@@ -9,4 +9,6 @@ public partial class Configuration
     public DateTime LastModified { get; set; }
 
     public int? ModifiedUserId { get; set; }
+
+    public string? ConfigValue { get; set; }
 }

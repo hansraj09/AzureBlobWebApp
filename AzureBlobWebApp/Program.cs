@@ -19,6 +19,7 @@ builder.Services.AddDbContext<AzureBlobWebAppDbContext>(options => options.UseLa
 
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 builder.Services.AddScoped<IAzureBlobService, AzureBlobService>();
 builder.Services.AddScoped<IDataRepository, DataRepository>();
 
