@@ -70,6 +70,7 @@ public partial class AzureBlobWebAppDbContext : DbContext
             entity.Property(e => e.ConfigName).HasMaxLength(20);
             entity.Property(e => e.LastModified).HasColumnType("datetime");
             entity.Property(e => e.ModifiedUserId).HasColumnName("ModifiedUserID");
+            entity.Property(e => e.ConfigValue).HasMaxLength(500);
         });
 
         modelBuilder.Entity<Container>(entity =>
@@ -104,6 +105,7 @@ public partial class AzureBlobWebAppDbContext : DbContext
             entity.Property(e => e.ModifiedUserId).HasColumnName("ModifiedUserID");
             entity.Property(e => e.Size).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Type).HasMaxLength(20);
+            entity.Property(e => e.GUID).HasMaxLength(100);
 
             entity.HasOne(d => d.Container).WithMany(p => p.Files)
                 .HasForeignKey(d => d.ContainerId)

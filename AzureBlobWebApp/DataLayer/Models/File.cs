@@ -21,6 +21,7 @@ public partial class File
     public int? ModifiedUserId { get; set; }
 
     public int ContainerId { get; set; }
+    public string GUID { get; set; } = null!;
 
     public virtual Container Container { get; set; } = null!;
 }

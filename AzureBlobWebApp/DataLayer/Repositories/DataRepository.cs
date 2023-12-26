@@ -2,6 +2,8 @@
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.DataLayer.DTOs;
 using AzureBlobWebApp.DataLayer.Models;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.EntityFrameworkCore;
 
 namespace AzureBlobWebApp.DataLayer.Repositories
 {
@@ -67,6 +69,16 @@ namespace AzureBlobWebApp.DataLayer.Repositories
             };
             tblUser.Roles.Add(_userRole);
             _context.Users.Add(tblUser);
+
+            // add container
+            Container tblContainer = new()
+            {
+                ContainerName = userInfo.UserName,
+                LastModified = DateTime.Now,
+                ModifiedUserId = userInfo.UserId,
+                UserId = userInfo.UserId 
+            };
+            _context.Containers.Add(tblContainer);
             _context.SaveChanges();
             return new();
         }
@@ -106,7 +118,128 @@ namespace AzureBlobWebApp.DataLayer.Repositories
         {
             return _context.RefreshTokens.FirstOrDefault(o => o.UserId == userId && o.Token == token);
         }
+        public IEnumerable<Configuration> GetConfigurations()
+        {
+            return _context.Configurations.ToList();
+        }
 
+        public ResponseBase SetConfigurations(int maxSize, string allowedTypes)
+        {
+            var maxSizeRecord = _context.Configurations.FirstOrDefault(c => c.ConfigId == 1);
+            if (maxSizeRecord != null)
+            {
+                maxSizeRecord.ConfigValue = maxSize.ToString();
+            }
+            else
+            {
+                return new()
+                {
+                    StatusCode = HttpStatusCode.NotFound,
+                    StatusMessage = "Could not find maxSize record (id: 1)"
+                };
+            }
+            var allowedTypesRecord = _context.Configurations.FirstOrDefault(c => c.ConfigId == 2);
+            if (allowedTypesRecord != null)
+            {
+                allowedTypesRecord.ConfigValue = allowedTypes;
+            }
+            else
+            {
+                return new()
+                {
+                    StatusCode = HttpStatusCode.NotFound,
+                    StatusMessage = "Could not find allowedTypes record (id: 2)"
+                };
+            }
+            _context.SaveChanges();
+            return new();
+        }
+
+
+
+        public int GetContainerIdFromUserId(int userId)
+        {
+            var container =_context.Containers.FirstOrDefault(c => c.UserId == userId);
+            if (container == null)
+            {
+                return -1;
+            }
+            return container.ContainerId;
+        }
+
+        public ResponseBase AddFile(string username, Models.File file)
+        {
+            var userId = GetUserIdFromUsername(username);
+            if (userId == -1)
+            {
+                return new ResponseBase()
+                {
+                    StatusCode = HttpStatusCode.NoContent,
+                    StatusMessage = "No user exists with this username"
+                };
+            }
+            var containerId = GetContainerIdFromUserId(userId);
+            if (containerId == -1)
+            {
+                return new ResponseBase()
+                {
+                    StatusCode = HttpStatusCode.NoContent,
+                    StatusMessage = "No container found for the user"
+                };
+            }
+            file.ModifiedUserId = userId;
+            file.ContainerId = containerId;
+            _context.Files.Add(file);
+            _context.SaveChanges();
+            return new();
+        }
+
+        public List<Blob> GetFiles(string username)
+        {
+            var userId = GetUserIdFromUsername(username);
+            var containerId = GetContainerIdFromUserId(userId);
+            var files = _context.Files.Where(f => f.ContainerId == containerId);
+            List<Blob> fileList = new();
+            foreach (var file in files)
+            {
+                fileList.Add(new Blob()
+                {
+                    ContainerId = file.ContainerId,
+                    Description = file.Description,
+                    FileId = file.FileId,
+                    FileName = file.FileName,
+                    GUID = file.GUID,
+                    IsDeleted = file.IsDeleted,
+                    IsPublic = file.IsPublic,
+                    LastModified = file.LastModified,
+                    ModifiedUserId = file.ModifiedUserId,
+                    Size = file.Size,
+                    Type = file.Type,
+                });
+            }
+            return fileList;
+        }
+
+        public string? GetFilenameFromGUID(string guid)
+        {
+            return _context.Files.Select(f => f.FileName).FirstOrDefault();
+        }
+
+        public ResponseBase DeleteFile(string guid)
+        {
+            var fileToDelete = _context.Files.SingleOrDefault(f => f.GUID == guid);
+            if (fileToDelete != null)
+            {
+                fileToDelete.IsDeleted = true;
+                _context.SaveChanges();
+                return new();
+            }
+            return new ResponseBase()
+            {
+                StatusCode = HttpStatusCode.NotFound,
+                StatusMessage = "Could not find file to be deleted"
+            };
+        }
 
         // this is a temporary method to test the authorization functionality
         // REMOVE LATER

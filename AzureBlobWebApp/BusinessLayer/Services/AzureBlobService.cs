@@ -1,10 +1,13 @@
 ﻿using System.Net;
+using Azure;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
+using AzureBlobWebApp.DataLayer.Models;
 using AzureBlobWebApp.DataLayer.Repositories;
 using Microsoft.Extensions.Options;
+using File = AzureBlobWebApp.DataLayer.Models.File;
 
 namespace AzureBlobWebApp.BusinessLayer.Services
 {
@@ -31,9 +34,12 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             await blobContainerClient.CreateIfNotExistsAsync();
         }
 
-        public async Task<List<Blob>?> GetAllBlobsAsync(string username)
+        public List<Blob> GetAllBlobs(string username)
         {
-            try
+            var dbFiles = _dataRepository.GetFiles(username);
+            return dbFiles;
+
+            /*try
             {
                 await CreateContainerIfNotExistsAsync(username);
                 var blobContainerClient = _blobServiceClient.GetBlobContainerClient(username);
@@ -55,8 +61,7 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             {
                 _logger.Log(LogLevel.Error, ex.Message);
                 return null;
-            } 
-            
+            } */           
         }
 
         public async Task<BlobResponse> UploadAsync(string username, IFormFile file)
@@ -65,15 +70,35 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             {
                 await CreateContainerIfNotExistsAsync(username);
                 var container = _blobServiceClient.GetBlobContainerClient(username);
-                BlobClient client = container.GetBlobClient(file.FileName);
+                string guid = Guid.NewGuid().ToString();
+                BlobClient client = container.GetBlobClient(guid);
 
                 await using (Stream? data = file.OpenReadStream())
                 {
                     await client.UploadAsync(data);
                 }
+
+                File fileInfo = new()
+                {
+                    FileName = file.FileName,
+                    Type = file.ContentType,
+                    Size = file.Length,
+                    LastModified = DateTime.Now,
+                    GUID = guid,
+                    IsDeleted = false,
+                    IsPublic = false
+                };
+
+                var dbResponse = _dataRepository.AddFile(username, fileInfo);
+                if (dbResponse.StatusCode == HttpStatusCode.NoContent)
+                {
+                    _logger.Log(LogLevel.Error, dbResponse.StatusMessage);
+                    return new() { StatusCode = HttpStatusCode.InternalServerError, StatusMessage = "Internal Server Error" };
+                }
+
                 var response = new BlobResponse();
-                response.Blob.Uri = client.Uri.AbsoluteUri;
-                response.Blob.Name = client.Name;
+                //response.Blob.Uri = client.Uri.AbsoluteUri;
+                //response.Blob.Name = client.Name;
                 return response;
             }
             catch (Azure.RequestFailedException ex)
@@ -83,44 +108,40 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             }  
         }
 
-        public async Task<Blob?> DownloadAsync(string blobName, string username)
+        public async Task<DownloadFile?> DownloadAsync(string blobName, string username)
         {
             var container = _blobServiceClient.GetBlobContainerClient(username);
             BlobClient client = container.GetBlobClient(blobName);
 
             if (await client.ExistsAsync())
             {
-                //var data = await client.OpenReadAsync();
-                //Stream blobContent = data;
-
                 var content = await client.DownloadContentAsync();
+                var filename = _dataRepository.GetFilenameFromGUID(blobName);
 
-                return new Blob
+                return new DownloadFile()
                 {
                     Content = content.Value.Content.ToStream(),
-                    Name = blobName,
+                    Name = filename,
                     ContentType = content.Value.Details.ContentType
                 };
             }
             return null;
         }
 
-        public async Task<BlobResponse> DeleteAsync(string blobName, string username)
+        public BlobResponse Delete(string blobName, string username)
         {
-            try
-            {
-                var container = _blobServiceClient.GetBlobContainerClient(username);
-                BlobClient client = container.GetBlobClient(blobName);
+            /*var container = _blobServiceClient.GetBlobContainerClient(username);
+            BlobClient client = container.GetBlobClient(blobName);*/
 
-                await client.DeleteAsync();
-
-                return new();
-            }
-            catch (Azure.RequestFailedException ex)
+            //await client.DeleteAsync();
+            var response = _dataRepository.DeleteFile(blobName);
+            if (response.StatusCode != HttpStatusCode.OK)
             {
-                _logger.Log(LogLevel.Error, ex.Message);
-                return new() { StatusCode = HttpStatusCode.InternalServerError, StatusMessage = ex.Message };
+                _logger.Log(LogLevel.Error, response.StatusMessage);
+                return new() { StatusCode = HttpStatusCode.InternalServerError, StatusMessage = "Internal Server Error" };
             }
+
+            return new();
         }
 
         public async Task<IEnumerable<string>> ListBlobContainersAsync()

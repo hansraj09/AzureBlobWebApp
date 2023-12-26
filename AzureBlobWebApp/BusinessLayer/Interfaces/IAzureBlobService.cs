@@ -5,10 +5,10 @@ namespace AzureBlobWebApp.BusinessLayer.Interfaces
     public interface IAzureBlobService
     {
         Task CreateContainerIfNotExistsAsync(string userName);
-        Task<List<Blob>?> GetAllBlobsAsync(string username);
+        List<Blob> GetAllBlobs(string username);
         Task<BlobResponse> UploadAsync(string username, IFormFile file);
-        Task<Blob?> DownloadAsync(string blobName, string username);
-        Task<BlobResponse> DeleteAsync(string blobName, string username);
+        Task<DownloadFile?> DownloadAsync(string blobName, string username);
+        BlobResponse Delete(string blobName, string username);
         Task<IEnumerable<string>> ListBlobContainersAsync();
     }
 }

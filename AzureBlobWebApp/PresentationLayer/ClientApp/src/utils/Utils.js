@@ -5,10 +5,18 @@ export const GetUsernameFromToken = () => {
     const token = sessionStorage.getItem('JWTtoken')
     if (token !== null) {
         const decoded = jwt_decode(token)
-        console.log(decoded)
+        //console.log(decoded)
         return decoded.unique_name
     }
     return ''
+}
+
+export const GetRolesFromToken = () => {
+  const token = sessionStorage.getItem('JWTtoken')
+  if (token !== null) {
+    const decoded = jwt_decode(token)
+    return decoded.role
+  }
 }
 
 function stringToColor(string) {

@@ -11,6 +11,7 @@ import VisuallyHiddenInput from "../components/VisuallyHiddenInput";
 const FileBrowser = () => {
 
     const [files, setFiles] = useState([])
+    const [deletedFiles, setDeletedFiles] = useState([])
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
@@ -22,10 +23,13 @@ const FileBrowser = () => {
             setLoading(true)
             let response = await AzureBlobAPI.getAllBlobs()
             setLoading(false)
-            setFiles(response)
+            const validFiles = response.filter((f) => !f.isDeleted)
+            const deletedFiles = response.filter((f) => f.isDeleted)
+            setFiles(validFiles)
+            setDeletedFiles(deletedFiles)
         } catch (error) {
             setLoading(false)
-            toast.error(error.response.data || error.message, toastOptions)
+            toast.error(error?.response?.data || error.message, toastOptions)
         }
     }
 
@@ -39,27 +43,27 @@ const FileBrowser = () => {
             setLoading(false)
         } catch (error) {
             setLoading(false)
-            toast.error(error.response.data || error.message, toastOptions)
+            toast.error(error?.response.data || error?.message, toastOptions)
         }
         await fetchData()
     }
 
-    const onDelete = async (filename) => {
+    const onDelete = async (guid) => {
         try {
             setLoading(true)
-            await AzureBlobAPI.delete(filename)
+            await AzureBlobAPI.delete(guid)
             setLoading(false)
         } catch (error) {
             setLoading(false)
-            toast.error(error.response.data || error.message, toastOptions)
+            toast.error(error?.response?.data || error.message, toastOptions)
         }
         await fetchData()
     }
 
-    const onDownload = async (filename) => {
+    const onDownload = async (guid, filename) => {
         try {
             setLoading(true)
-            let file = await AzureBlobAPI.download(filename)
+            let file = await AzureBlobAPI.download(guid)
             setLoading(false)
             const element = document.createElement("a");
             element.href = URL.createObjectURL(file);
@@ -71,19 +75,19 @@ const FileBrowser = () => {
             URL.revokeObjectURL(file);
         } catch (error) {
             setLoading(false)
-            toast.error(error.response.data || error.message, toastOptions)
+            toast.error(error?.response?.data || error.message, toastOptions)
         }
         
     }
 
     return (
         <>
-            <div className="d-flex flex-col w-100 vh-100">
+            <div className="d-flex flex-col w-100 vh-100 flex-wrap">
                 {(files === null || files.length === 0) ? (
                     <p className="d-flex flex-row justify-content-center vh-100 w-100 fs-1 align-items-center">No files found</p>
                 ) : (
                     files.map((file, index) => 
-                        <FileItem key={index} name={file.name} type={file.contentType} uri={file.uri} onDelete={onDelete} onDownload={onDownload} />
+                        <FileItem key={index} fileItem={file} onDelete={onDelete} onDownload={onDownload} />
                     )                   
                 )}
                 <Fab color="primary" component="label" aria-label="add" sx={{
