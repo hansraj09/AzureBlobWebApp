@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Collapse, Navbar, NavbarBrand, NavbarToggler, UncontrolledDropdown, DropdownToggle, DropdownItem, DropdownMenu } from 'reactstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
-import { GetUsernameFromToken, stringAvatar } from '../utils/Utils';
+import { GetRolesFromToken, GetUsernameFromToken, stringAvatar } from '../utils/Utils';
 import './NavMenu.css';
 
 const NavMenu = () => {
@@ -23,6 +23,7 @@ const NavMenu = () => {
 
   const getUsername = () =>  GetUsernameFromToken().toString()
   const checkSignedIn = () => sessionStorage.getItem("JWTtoken") !== null
+  const checkAdmin = () => GetRolesFromToken() === "admin"
 
   const handleSignOut = (e) => {
     e.preventDefault()
@@ -46,8 +47,12 @@ const NavMenu = () => {
                   <Avatar {...stringAvatar(getUsername())} />
               </DropdownToggle>
               <DropdownMenu end>
-                <DropdownItem onClick={handleSettings}>Settings</DropdownItem>
-                <DropdownItem divider />
+                {checkAdmin() && (
+                  <>
+                    <DropdownItem onClick={handleSettings}>Settings</DropdownItem>
+                    <DropdownItem divider />
+                  </>
+                )}
                 <DropdownItem className='text-danger' onClick={handleSignOut}>Sign Out</DropdownItem>
               </DropdownMenu>
             </UncontrolledDropdown>               

@@ -15,7 +15,7 @@ export const GetRolesFromToken = () => {
   const token = sessionStorage.getItem('JWTtoken')
   if (token !== null) {
     const decoded = jwt_decode(token)
-    return decoded.roles
+    return decoded.role
   }
 }
 
