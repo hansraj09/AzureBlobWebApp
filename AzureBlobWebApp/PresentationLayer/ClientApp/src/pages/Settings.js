@@ -6,8 +6,10 @@ import FormControl from '@mui/material/FormControl';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import MultiChipSelectorBox from '../components/MultiChipSelectorBox';
 import { toastOptions } from "../utils/Utils"
+import { Spinner } from 'react-bootstrap'
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import ConfigurationAPI from '../apis/ConfigurationAPI';
 
 const Settings = () => {
 
@@ -15,15 +17,29 @@ const Settings = () => {
 
     const [maxAllowedSizeInMB, setMaxAllowedSizeInMB] = useState(DEFAULT_MAX_SIZE)
     const [types, setTypes] = useState([]);
+    const [loading, setLoading] = useState(false)
 
     const navigate = useNavigate()
 
     useEffect(() => {
-        // get user configurations
-        // const userConfig = await ...
-        //setMaxAllowedSizeInMB(userConfig.maxSize)
-        //setTypes(userConfig.allowedTypes)
+        fetchConfig()
     }, [])
+
+    async function fetchConfig() {
+        try {
+            setLoading(true)
+            let response = await ConfigurationAPI.getConfigs()
+            setLoading(false)
+            if (response.length >= 2) {
+                setMaxAllowedSizeInMB(response[0].configValue)
+                const deserializedTypes = JSON.parse(response[1].configValue)
+                setTypes(deserializedTypes)
+            }
+        } catch (error) {
+            setLoading(false)
+            toast.error(error?.response?.data || error.message, toastOptions)
+        }
+    }
 
     const typeList = [
         'text',
@@ -40,12 +56,19 @@ const Settings = () => {
         }
     }
 
-    const onSave = () => {
+    const onSave = async () => {
         if (maxAllowedSizeInMB === "") {
             toast.error("Max allowed size cannot be empty", toastOptions)
+        } else if (types.length === 0 || types === null) {
+            toast.error("Please select at least one option for allowed types", toastOptions)
         } else {
-            // save configuration
-            navigate('/home')
+            try {
+                const serializedAllowedTypes = JSON.stringify(types)
+                await ConfigurationAPI.setConfigs(maxAllowedSizeInMB, serializedAllowedTypes)
+                navigate('/home')
+            } catch(error) {
+                toast.error(error?.response?.data || error.message, toastOptions)
+            }
         }
     }
 
@@ -79,7 +102,20 @@ const Settings = () => {
             </div>
         </div>
         <div className='d-flex flex-row align-items-center justify-content-end w-100'>
-            <Button variant="contained" onClick={onSave}>Save</Button>
+        
+            <Button variant="contained" onClick={onSave} disabled={loading}>
+            {loading ? (
+                <Spinner
+                    as="span"
+                    variant="warning"
+                    size="sm"
+                    role="status"
+                    aria-hidden="true"
+                    animation="border"/>
+            ) : (
+                <span>Save</span>
+            )}
+            </Button>
             <Button variant="outlined" color='error' onClick={onCancel} sx={{mx: 5}}>Cancel</Button>
         </div>
         <ToastContainer />

@@ -29,7 +29,7 @@ const FileBrowser = () => {
             setDeletedFiles(deletedFiles)
         } catch (error) {
             setLoading(false)
-            toast.error(error.response.data || error.message, toastOptions)
+            toast.error(error?.response?.data || error.message, toastOptions)
         }
     }
 
@@ -43,7 +43,7 @@ const FileBrowser = () => {
             setLoading(false)
         } catch (error) {
             setLoading(false)
-            toast.error(error.response.data || error.message, toastOptions)
+            toast.error(error?.response.data || error?.message, toastOptions)
         }
         await fetchData()
     }
@@ -55,7 +55,7 @@ const FileBrowser = () => {
             setLoading(false)
         } catch (error) {
             setLoading(false)
-            toast.error(error.response.data || error.message, toastOptions)
+            toast.error(error?.response?.data || error.message, toastOptions)
         }
         await fetchData()
     }
@@ -75,14 +75,14 @@ const FileBrowser = () => {
             URL.revokeObjectURL(file);
         } catch (error) {
             setLoading(false)
-            toast.error(error.response.data || error.message, toastOptions)
+            toast.error(error?.response?.data || error.message, toastOptions)
         }
         
     }
 
     return (
         <>
-            <div className="d-flex flex-col w-100 vh-100">
+            <div className="d-flex flex-col w-100 vh-100 flex-wrap">
                 {(files === null || files.length === 0) ? (
                     <p className="d-flex flex-row justify-content-center vh-100 w-100 fs-1 align-items-center">No files found</p>
                 ) : (

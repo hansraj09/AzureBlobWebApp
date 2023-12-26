@@ -123,13 +123,39 @@ namespace AzureBlobWebApp.DataLayer.Repositories
             return _context.Configurations.ToList();
         }
 
-
-        // this is a temporary method to test the authorization functionality
-        // REMOVE LATER
-        public IEnumerable<string> GetAllUsers()
+        public ResponseBase SetConfigurations(int maxSize, string allowedTypes)
         {
-            return _context.Users.Select(u => u.UserName).ToList();
+            var maxSizeRecord = _context.Configurations.FirstOrDefault(c => c.ConfigId == 1);
+            if (maxSizeRecord != null)
+            {
+                maxSizeRecord.ConfigValue = maxSize.ToString();
+            }
+            else
+            {
+                return new()
+                {
+                    StatusCode = HttpStatusCode.NotFound,
+                    StatusMessage = "Could not find maxSize record (id: 1)"
+                };
+            }
+            var allowedTypesRecord = _context.Configurations.FirstOrDefault(c => c.ConfigId == 2);
+            if (allowedTypesRecord != null)
+            {
+                allowedTypesRecord.ConfigValue = allowedTypes;
+            }
+            else
+            {
+                return new()
+                {
+                    StatusCode = HttpStatusCode.NotFound,
+                    StatusMessage = "Could not find allowedTypes record (id: 2)"
+                };
+            }
+            _context.SaveChanges();
+            return new();
         }
+
+
 
         public int GetContainerIdFromUserId(int userId)
         {
@@ -213,6 +239,13 @@ namespace AzureBlobWebApp.DataLayer.Repositories
                 StatusCode = HttpStatusCode.NotFound,
                 StatusMessage = "Could not find file to be deleted"
             };
+        }
+
+        // this is a temporary method to test the authorization functionality
+        // REMOVE LATER
+        public IEnumerable<string> GetAllUsers()
+        {
+            return _context.Users.Select(u => u.UserName).ToList();
         }
     }
 }

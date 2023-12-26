@@ -44,7 +44,7 @@ const Login = () => {
                 navigate('/home')
             } catch (error) {
                 setLoading(false)
-                toast.error(error.response.data, toastOptions)
+                toast.error(error?.response?.data, toastOptions)
             }         
         }
     }

@@ -14,6 +14,7 @@ namespace AzureBlobWebApp.DataLayer.Repositories
         ResponseBase AddOrUpdateRefreshToken(string username, string token);
         RefreshToken? GetExistingRefreshTokenForUser(int userId, string token);
         IEnumerable<Configuration> GetConfigurations();
+        ResponseBase SetConfigurations(int maxSize, string allowedTypes);
         int GetContainerIdFromUserId(int userId);
         ResponseBase AddFile(string username, File file);
         List<Blob> GetFiles(string username);
