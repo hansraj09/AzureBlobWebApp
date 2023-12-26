@@ -1,0 +1,11 @@
+.bg-main {
+    transition: 0.3s;
+}
+
+.bg-main:hover {
+    background-color:rgb(214, 229, 233);
+}
+
+.bg-main:focus {
+    background-color:rgba(214, 229, 233, 0.882);
+}

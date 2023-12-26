@@ -1,18 +1,18 @@
 import React, { useState } from 'react'
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
-import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
 import AudioFileIcon from '@mui/icons-material/AudioFile';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ImageIcon from '@mui/icons-material/Image';
 import InfoIcon from '@mui/icons-material/Info';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import RestoreIcon from '@mui/icons-material/Restore';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import VideoCameraBackIcon from '@mui/icons-material/VideoCameraBack';
 import IconButton from '@mui/material/IconButton';
-import './FileItem.css'
+import './BinItem.css'
 
 
-const FileItem = (props) => {
+const BinItem = (props) => {
 
     const [open, setOpen] = useState(false)
 
@@ -45,17 +45,17 @@ const FileItem = (props) => {
             <IconButton color="secondary" aria-label="delete file" onClick={toggleModal}>
                 <DeleteForeverIcon />
             </IconButton>
-            <IconButton color="primary" aria-label="details">
+            <IconButton color="primary" aria-label="details" onClick={() => {}}>
                 <InfoIcon />
             </IconButton>
-            <IconButton color="primary" aria-label="download file" onClick={() => {props.onDownload(props.fileItem.guid, props.fileItem.fileName)}}>
-                <ArrowCircleDownIcon />
+            <IconButton color="primary" aria-label="restore file" onClick={props.onRestore(props.fileItem.guid)}>
+                <RestoreIcon />
             </IconButton>
         </div>
         <Modal isOpen={open} toggle={toggleModal}>
             <ModalHeader toggle={toggleModal}>Modal title</ModalHeader>
             <ModalBody>
-            Are you sure you want to delete the file {props.fileItem.fileName}?
+            Are you sure you want to permanently delete the file {props.fileItem.fileName}?
             </ModalBody>
             <ModalFooter>
             <Button color="danger" onClick={() => {
@@ -73,4 +73,4 @@ const FileItem = (props) => {
   )
 }
 
-export default FileItem
+export default BinItem

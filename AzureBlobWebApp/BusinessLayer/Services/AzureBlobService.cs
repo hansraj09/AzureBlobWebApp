@@ -1,10 +1,8 @@
 ﻿using System.Net;
-using Azure;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
-using AzureBlobWebApp.DataLayer.Models;
 using AzureBlobWebApp.DataLayer.Repositories;
 using Microsoft.Extensions.Options;
 using File = AzureBlobWebApp.DataLayer.Models.File;

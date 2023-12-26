@@ -2,8 +2,6 @@
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.DataLayer.DTOs;
 using AzureBlobWebApp.DataLayer.Models;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.EntityFrameworkCore;
 
 namespace AzureBlobWebApp.DataLayer.Repositories
 {

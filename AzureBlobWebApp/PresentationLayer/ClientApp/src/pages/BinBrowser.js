@@ -2,18 +2,18 @@ import { useEffect, useState } from "react"
 import { toast, ToastContainer } from "react-toastify"
 import { Spinner } from 'react-bootstrap'
 import Fab from '@mui/material/Fab';
-import AddIcon from '@mui/icons-material/Add';
+import DoneIcon from '@mui/icons-material/Done';
 import AzureBlobAPI from "../apis/AzureBlobAPI"
 import { toastOptions } from "../utils/Utils"
-import FileItem from "../components/FileItem"
-import VisuallyHiddenInput from "../components/VisuallyHiddenInput";
-import RecycleBin from "../components/RecycleBin";
+import BinItem from "../components/BinItem";
+import { useNavigate } from "react-router-dom";
 
-const FileBrowser = () => {
+const BinBrowser = () => {
 
     const [files, setFiles] = useState([])
-    const [numDeleted, setNumDeleted] = useState(0)
     const [loading, setLoading] = useState(false)
+
+    const navigate = useNavigate()
 
     useEffect(() => {
         fetchData()
@@ -24,35 +24,18 @@ const FileBrowser = () => {
             setLoading(true)
             let response = await AzureBlobAPI.getAllBlobs()
             setLoading(false)
-            const validFiles = response.filter((f) => !f.isDeleted)
-            const numDeleted = response.length - validFiles.length
+            const validFiles = response.filter((f) => f.isDeleted)
             setFiles(validFiles)
-            setNumDeleted(numDeleted)
         } catch (error) {
             setLoading(false)
             toast.error(error?.response?.data || error.message, toastOptions)
         }
     }
 
-    const onUpload = async (e) => {
-        const fileToUpload = e.target.files[0]
-        const formdata = new FormData();
-        formdata.append("file", fileToUpload)
+    const onPermanentDelete = async (guid) => {
         try {
             setLoading(true)
-            await AzureBlobAPI.upload(formdata)
-            setLoading(false)
-        } catch (error) {
-            setLoading(false)
-            toast.error(error?.response.data || error?.message, toastOptions)
-        }
-        await fetchData()
-    }
-
-    const onDelete = async (guid) => {
-        try {
-            setLoading(true)
-            await AzureBlobAPI.delete(guid)
+            await AzureBlobAPI.permanentDelete(guid)
             setLoading(false)
         } catch (error) {
             setLoading(false)
@@ -61,24 +44,16 @@ const FileBrowser = () => {
         await fetchData()
     }
 
-    const onDownload = async (guid, filename) => {
+    const onRestore = async (guid) => {
         try {
             setLoading(true)
-            let file = await AzureBlobAPI.download(guid)
+            await AzureBlobAPI.restore(guid)
             setLoading(false)
-            const element = document.createElement("a");
-            element.href = URL.createObjectURL(file);
-            element.download = filename;// simulate link click
-            document.body.appendChild(element); // Required for this to work in FireFox
-            element.click();
-            // clean up "a" element & remove ObjectURL
-            document.body.removeChild(element);
-            URL.revokeObjectURL(file);
         } catch (error) {
             setLoading(false)
             toast.error(error?.response?.data || error.message, toastOptions)
         }
-        
+        await fetchData()
     }
 
     return (
@@ -89,10 +64,9 @@ const FileBrowser = () => {
                 ) : (
                     <>
                         {files.map((file, index) => 
-                            <FileItem key={index} fileItem={file} onDelete={onDelete} onDownload={onDownload} />
-                        )}
-                        <RecycleBin number={numDeleted} />                   
-                    </>                   
+                            <BinItem key={index} fileItem={file} onDelete={onPermanentDelete} onRestore={onRestore} />
+                        )}                 
+                    </>
                 )}
                 <Fab color="primary" component="label" aria-label="add" sx={{
                     position: "fixed",
@@ -108,10 +82,9 @@ const FileBrowser = () => {
                             aria-hidden="true"
                             animation="border"/>
                     ) : (
-                        <>
-                            <AddIcon />
-                            <VisuallyHiddenInput type="file" onChange={onUpload} />
-                        </>
+                        <div onClick={() => navigate("/home")}>
+                            <DoneIcon />
+                        </div>
                         
                     )}
                 </Fab>
@@ -121,6 +94,6 @@ const FileBrowser = () => {
     )
 }
 
-export default FileBrowser
+export default BinBrowser
 
 // add to input to only accept types: accept=".jpg, .png"
