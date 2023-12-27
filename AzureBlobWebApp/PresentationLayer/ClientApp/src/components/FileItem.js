@@ -53,7 +53,7 @@ const FileItem = (props) => {
             </IconButton>
         </div>
         <Modal isOpen={open} toggle={toggleModal}>
-            <ModalHeader toggle={toggleModal}>Modal title</ModalHeader>
+            <ModalHeader toggle={toggleModal}>Confirm Delete</ModalHeader>
             <ModalBody>
             Are you sure you want to delete the file {props.fileItem.fileName}?
             </ModalBody>

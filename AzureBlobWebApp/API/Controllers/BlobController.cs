@@ -102,15 +102,9 @@ namespace AzureBlobWebApp.API.Controllers
         [HttpDelete]
         [Authorize]
         [Route("Delete")]
-        public async Task<IActionResult> Delete([FromBody] string GUID) 
+        public IActionResult Delete([FromBody] string GUID) 
         {
-            var token = await HttpContext.GetTokenAsync("access_token");
-            var username = _tokenService.GetUsername(token);
-            if (username == null)
-            {
-                return Unauthorized();
-            }
-            var response = _azureBlobService.Delete(GUID, username);
+            var response = _azureBlobService.Delete(GUID);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok("File successfully deleted");
@@ -119,6 +113,41 @@ namespace AzureBlobWebApp.API.Controllers
                 return StatusCode(500, "Delete failed");
             }
             return BadRequest(response);
+        }
+
+        [HttpDelete]
+        [Authorize]
+        [Route("PermanentDelete")]
+        public async Task<IActionResult> PermanentDelete([FromBody] string GUID)
+        {
+            var token = await HttpContext.GetTokenAsync("access_token");
+            var username = _tokenService.GetUsername(token);
+            if (username == null)
+            {
+                return Unauthorized();
+            }
+            var response = await _azureBlobService.PermanentDelete(GUID, username);
+            if (response.StatusCode == HttpStatusCode.InternalServerError)
+            {
+                return StatusCode(500, response.StatusMessage);
+            } else if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return Ok("File permanently deleted");
+            }
+            return BadRequest("Failed to permanently delete file");
+        }
+
+        [HttpPut]
+        [Authorize]
+        [Route("Restore")]
+        public IActionResult Restore([FromBody] string GUID)
+        {
+            var response = _azureBlobService.Restore(GUID);
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                return BadRequest("Failed to restore file");
+            }
+            return Ok("File successfully restored");
         }
     }
 }

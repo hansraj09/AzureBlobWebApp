@@ -48,12 +48,12 @@ const BinItem = (props) => {
             <IconButton color="primary" aria-label="details" onClick={() => {}}>
                 <InfoIcon />
             </IconButton>
-            <IconButton color="primary" aria-label="restore file" onClick={props.onRestore(props.fileItem.guid)}>
+            <IconButton color="primary" aria-label="restore file" onClick={() => props.onRestore(props.fileItem.guid)}>
                 <RestoreIcon />
             </IconButton>
         </div>
         <Modal isOpen={open} toggle={toggleModal}>
-            <ModalHeader toggle={toggleModal}>Modal title</ModalHeader>
+            <ModalHeader toggle={toggleModal}>Confirm Permanent Delete</ModalHeader>
             <ModalBody>
             Are you sure you want to permanently delete the file {props.fileItem.fileName}?
             </ModalBody>

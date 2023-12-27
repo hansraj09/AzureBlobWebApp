@@ -37,6 +37,7 @@ const BinBrowser = () => {
             setLoading(true)
             await AzureBlobAPI.permanentDelete(guid)
             setLoading(false)
+            toast.info("File successfully deleted", toastOptions)
         } catch (error) {
             setLoading(false)
             toast.error(error?.response?.data || error.message, toastOptions)
@@ -49,6 +50,7 @@ const BinBrowser = () => {
             setLoading(true)
             await AzureBlobAPI.restore(guid)
             setLoading(false)
+            toast.info("File successfully restored", toastOptions)
         } catch (error) {
             setLoading(false)
             toast.error(error?.response?.data || error.message, toastOptions)
@@ -62,13 +64,11 @@ const BinBrowser = () => {
                 {(files === null || files.length === 0) ? (
                     <p className="d-flex flex-row justify-content-center vh-100 w-100 fs-1 align-items-center">No files found</p>
                 ) : (
-                    <>
-                        {files.map((file, index) => 
-                            <BinItem key={index} fileItem={file} onDelete={onPermanentDelete} onRestore={onRestore} />
-                        )}                 
-                    </>
+                    files.map((file, index) => 
+                        <BinItem key={index} fileItem={file} onDelete={onPermanentDelete} onRestore={onRestore} />
+                    )                
                 )}
-                <Fab color="primary" component="label" aria-label="add" sx={{
+                <Fab color="primary" component="label" aria-label="add" disabled={loading} onClick={() => navigate("/home")} sx={{
                     position: "fixed",
                     bottom: (theme) => theme.spacing(2),
                     right: (theme) => theme.spacing(2)
@@ -82,10 +82,7 @@ const BinBrowser = () => {
                             aria-hidden="true"
                             animation="border"/>
                     ) : (
-                        <div onClick={() => navigate("/home")}>
-                            <DoneIcon />
-                        </div>
-                        
+                        <DoneIcon />                      
                     )}
                 </Fab>
             </div>
@@ -95,5 +92,3 @@ const BinBrowser = () => {
 }
 
 export default BinBrowser
-
-// add to input to only accept types: accept=".jpg, .png"

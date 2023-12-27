@@ -1,8 +1,10 @@
 ﻿using System.Net;
+using Azure;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
+using AzureBlobWebApp.DataLayer.DTOs;
 using AzureBlobWebApp.DataLayer.Repositories;
 using Microsoft.Extensions.Options;
 using File = AzureBlobWebApp.DataLayer.Models.File;
@@ -126,12 +128,9 @@ namespace AzureBlobWebApp.BusinessLayer.Services
             return null;
         }
 
-        public BlobResponse Delete(string blobName, string username)
+        public ResponseBase Delete(string blobName)
         {
-            /*var container = _blobServiceClient.GetBlobContainerClient(username);
-            BlobClient client = container.GetBlobClient(blobName);*/
-
-            //await client.DeleteAsync();
+            
             var response = _dataRepository.DeleteFile(blobName);
             if (response.StatusCode != HttpStatusCode.OK)
             {
@@ -139,6 +138,43 @@ namespace AzureBlobWebApp.BusinessLayer.Services
                 return new() { StatusCode = HttpStatusCode.InternalServerError, StatusMessage = "Internal Server Error" };
             }
 
+            return new();
+        }
+
+        public async Task<ResponseBase> PermanentDelete(string blobName, string username)
+        {
+            try
+            {
+                var container = _blobServiceClient.GetBlobContainerClient(username);
+                BlobClient client = container.GetBlobClient(blobName);
+                await client.DeleteAsync();
+                var dbResponse = _dataRepository.Removefile(blobName);
+                if (dbResponse.StatusCode != HttpStatusCode.OK)
+                {
+                    _logger.Log(LogLevel.Error, dbResponse.StatusMessage);
+                    return dbResponse;
+                }
+                return new();
+            }
+            catch (Azure.RequestFailedException ex)
+            {
+                _logger.Log(LogLevel.Error, ex.Message);
+                return new()
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    StatusMessage = "Error while trying to delete on Azure Blob"
+                };
+            }
+        }
+
+        public ResponseBase Restore(string blobName)
+        {
+            var dbResponse = _dataRepository.RestoreFile(blobName);
+            if (dbResponse.StatusCode != HttpStatusCode.OK)
+            {
+                _logger.Log(LogLevel.Error, dbResponse.StatusMessage);
+                return dbResponse;
+            }
             return new();
         }
 

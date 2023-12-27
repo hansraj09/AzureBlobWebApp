@@ -245,5 +245,37 @@ namespace AzureBlobWebApp.DataLayer.Repositories
         {
             return _context.Users.Select(u => u.UserName).ToList();
         }
+
+        public ResponseBase Removefile(string guid)
+        {
+            var itemToRemove = _context.Files.SingleOrDefault(f => f.GUID == guid);
+            if (itemToRemove != null)
+            {
+                _context.Files.Remove(itemToRemove);
+                _context.SaveChanges();
+                return new();
+            }
+            return new ResponseBase()
+            {
+                StatusCode = HttpStatusCode.NotFound,
+                StatusMessage = "Could not find the file with the specified guid to delete"
+            };
+        }
+
+        public ResponseBase RestoreFile(string guid)
+        {
+            var fileToRestore = _context.Files.SingleOrDefault(f => f.GUID == guid);
+            if (fileToRestore != null)
+            {
+                fileToRestore.IsDeleted = false;
+                _context.SaveChanges();
+                return new();
+            }
+            return new ResponseBase()
+            {
+                StatusCode = HttpStatusCode.NotFound,
+                StatusMessage = "Could not find the file with the specified guid to restore"
+            };
+        }
     }
 }

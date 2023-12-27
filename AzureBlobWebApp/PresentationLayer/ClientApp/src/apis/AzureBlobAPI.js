@@ -38,6 +38,28 @@ const AzureBlobAPI = {
         })
         return response.data
     },
+    permanentDelete: async function (filename, cancel = false) {
+        const token = sessionStorage.getItem('JWTtoken')
+        const response = await api.request({
+            url: "blob/permanentdelete",
+            method: "DELETE",
+            headers: {"Authorization" : `Bearer ${token}`, 'Content-Type': 'application/json'},
+            data: filename,
+            signal: cancel ? cancelApiObject[this.permanentDelete.name].handleRequestCancellation().signal : undefined,
+        })
+        return response.data
+    },
+    restore: async function (filename, cancel = false) {
+        const token = sessionStorage.getItem('JWTtoken')
+        const response = await api.request({
+            url: "blob/restore",
+            method: "PUT",
+            headers: {"Authorization" : `Bearer ${token}`, 'Content-Type': 'application/json'},
+            data: filename,
+            signal: cancel ? cancelApiObject[this.restore.name].handleRequestCancellation().signal : undefined,
+        })
+        return response.data
+    },
     getAllBlobs: async function (cancel = false) {
         const token = sessionStorage.getItem('JWTtoken')
         const response = await api.request({

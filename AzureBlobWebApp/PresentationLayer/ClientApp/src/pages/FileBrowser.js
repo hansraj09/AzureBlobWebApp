@@ -42,6 +42,7 @@ const FileBrowser = () => {
             setLoading(true)
             await AzureBlobAPI.upload(formdata)
             setLoading(false)
+            toast.info("File successfully uploaded", toastOptions)
         } catch (error) {
             setLoading(false)
             toast.error(error?.response.data || error?.message, toastOptions)
@@ -54,6 +55,7 @@ const FileBrowser = () => {
             setLoading(true)
             await AzureBlobAPI.delete(guid)
             setLoading(false)
+            toast.info("File moved to Recently Deleted", toastOptions)
         } catch (error) {
             setLoading(false)
             toast.error(error?.response?.data || error.message, toastOptions)

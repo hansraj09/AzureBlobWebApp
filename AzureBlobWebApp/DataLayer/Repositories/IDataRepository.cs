@@ -20,6 +20,8 @@ namespace AzureBlobWebApp.DataLayer.Repositories
         List<Blob> GetFiles(string username);
         string? GetFilenameFromGUID(string guid);
         ResponseBase DeleteFile(string guid);
+        ResponseBase Removefile(string guid);
+        ResponseBase RestoreFile(string guid);
 
         // this is a temporary method to test the authorization functionality
         // REMOVE LATER
