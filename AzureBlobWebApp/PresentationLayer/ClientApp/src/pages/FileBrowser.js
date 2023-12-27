@@ -8,12 +8,16 @@ import { toastOptions } from "../utils/Utils"
 import FileItem from "../components/FileItem/FileItem"
 import VisuallyHiddenInput from "../components/VisuallyHiddenInput/VisuallyHiddenInput";
 import RecycleBin from "../components/RecycleBin/RecycleBin";
+import UploadModal from "../components/UploadModal/UploadModal";
 
 const FileBrowser = () => {
 
     const [files, setFiles] = useState([])
     const [numDeleted, setNumDeleted] = useState(0)
     const [loading, setLoading] = useState(false)
+    const [openModal, setOpenModal] = useState(false)
+
+    const toggleModal = () => setOpenModal(!openModal)
 
     useEffect(() => {
         fetchData()
@@ -96,7 +100,7 @@ const FileBrowser = () => {
                         <RecycleBin number={numDeleted} />                   
                     </>                   
                 )}
-                <Fab color="primary" component="label" aria-label="add" sx={{
+                <Fab color="primary" component="label" onClick={toggleModal} aria-label="add" sx={{
                     position: "fixed",
                     bottom: (theme) => theme.spacing(2),
                     right: (theme) => theme.spacing(2)
@@ -112,7 +116,8 @@ const FileBrowser = () => {
                     ) : (
                         <>
                             <AddIcon />
-                            <VisuallyHiddenInput type="file" onChange={onUpload} />
+                            <UploadModal open={openModal} toggleModal={toggleModal} onUpload={onUpload} />
+                            {/* <VisuallyHiddenInput type="file" onChange={onUpload} /> */}
                         </>
                         
                     )}
