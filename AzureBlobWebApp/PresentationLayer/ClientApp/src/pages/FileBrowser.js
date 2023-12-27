@@ -5,13 +5,14 @@ import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 import AzureBlobAPI from "../apis/AzureBlobAPI"
 import { toastOptions } from "../utils/Utils"
-import FileItem from "../components/FileItem"
-import VisuallyHiddenInput from "../components/VisuallyHiddenInput";
+import FileItem from "../components/FileItem/FileItem"
+import VisuallyHiddenInput from "../components/VisuallyHiddenInput/VisuallyHiddenInput";
+import RecycleBin from "../components/RecycleBin/RecycleBin";
 
 const FileBrowser = () => {
 
     const [files, setFiles] = useState([])
-    const [deletedFiles, setDeletedFiles] = useState([])
+    const [numDeleted, setNumDeleted] = useState(0)
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
@@ -24,9 +25,9 @@ const FileBrowser = () => {
             let response = await AzureBlobAPI.getAllBlobs()
             setLoading(false)
             const validFiles = response.filter((f) => !f.isDeleted)
-            const deletedFiles = response.filter((f) => f.isDeleted)
+            const numDeleted = response.length - validFiles.length
             setFiles(validFiles)
-            setDeletedFiles(deletedFiles)
+            setNumDeleted(numDeleted)
         } catch (error) {
             setLoading(false)
             toast.error(error?.response?.data || error.message, toastOptions)
@@ -41,6 +42,7 @@ const FileBrowser = () => {
             setLoading(true)
             await AzureBlobAPI.upload(formdata)
             setLoading(false)
+            toast.info("File successfully uploaded", toastOptions)
         } catch (error) {
             setLoading(false)
             toast.error(error?.response.data || error?.message, toastOptions)
@@ -53,6 +55,7 @@ const FileBrowser = () => {
             setLoading(true)
             await AzureBlobAPI.delete(guid)
             setLoading(false)
+            toast.info("File moved to Recently Deleted", toastOptions)
         } catch (error) {
             setLoading(false)
             toast.error(error?.response?.data || error.message, toastOptions)
@@ -86,9 +89,12 @@ const FileBrowser = () => {
                 {(files === null || files.length === 0) ? (
                     <p className="d-flex flex-row justify-content-center vh-100 w-100 fs-1 align-items-center">No files found</p>
                 ) : (
-                    files.map((file, index) => 
-                        <FileItem key={index} fileItem={file} onDelete={onDelete} onDownload={onDownload} />
-                    )                   
+                    <>
+                        {files.map((file, index) => 
+                            <FileItem key={index} fileItem={file} onDelete={onDelete} onDownload={onDownload} />
+                        )}
+                        <RecycleBin number={numDeleted} />                   
+                    </>                   
                 )}
                 <Fab color="primary" component="label" aria-label="add" sx={{
                     position: "fixed",

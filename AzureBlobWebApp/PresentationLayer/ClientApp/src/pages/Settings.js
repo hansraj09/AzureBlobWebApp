@@ -4,7 +4,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import MultiChipSelectorBox from '../components/MultiChipSelectorBox';
+import MultiChipSelectorBox from '../components/MultiChipSelectorBox/MultiChipSelectorBox';
 import { toastOptions } from "../utils/Utils"
 import { Spinner } from 'react-bootstrap'
 import { toast, ToastContainer } from 'react-toastify';

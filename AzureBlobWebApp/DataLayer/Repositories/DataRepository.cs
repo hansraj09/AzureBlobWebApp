@@ -2,8 +2,6 @@
 using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.DataLayer.DTOs;
 using AzureBlobWebApp.DataLayer.Models;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.EntityFrameworkCore;
 
 namespace AzureBlobWebApp.DataLayer.Repositories
 {
@@ -69,14 +67,16 @@ namespace AzureBlobWebApp.DataLayer.Repositories
             };
             tblUser.Roles.Add(_userRole);
             _context.Users.Add(tblUser);
+            _context.SaveChanges();
 
+            var userId = GetUserIdFromUsername(userInfo.UserName);
             // add container
             Container tblContainer = new()
             {
                 ContainerName = userInfo.UserName,
                 LastModified = DateTime.Now,
-                ModifiedUserId = userInfo.UserId,
-                UserId = userInfo.UserId 
+                ModifiedUserId = userId,
+                UserId = userId 
             };
             _context.Containers.Add(tblContainer);
             _context.SaveChanges();
@@ -231,6 +231,7 @@ namespace AzureBlobWebApp.DataLayer.Repositories
             if (fileToDelete != null)
             {
                 fileToDelete.IsDeleted = true;
+                fileToDelete.LastModified = DateTime.Now;
                 _context.SaveChanges();
                 return new();
             }
@@ -246,6 +247,39 @@ namespace AzureBlobWebApp.DataLayer.Repositories
         public IEnumerable<string> GetAllUsers()
         {
             return _context.Users.Select(u => u.UserName).ToList();
+        }
+
+        public ResponseBase Removefile(string guid)
+        {
+            var itemToRemove = _context.Files.SingleOrDefault(f => f.GUID == guid);
+            if (itemToRemove != null)
+            {
+                _context.Files.Remove(itemToRemove);
+                _context.SaveChanges();
+                return new();
+            }
+            return new ResponseBase()
+            {
+                StatusCode = HttpStatusCode.NotFound,
+                StatusMessage = "Could not find the file with the specified guid to delete"
+            };
+        }
+
+        public ResponseBase RestoreFile(string guid)
+        {
+            var fileToRestore = _context.Files.SingleOrDefault(f => f.GUID == guid);
+            if (fileToRestore != null)
+            {
+                fileToRestore.IsDeleted = false;
+                fileToRestore.LastModified = DateTime.Now;
+                _context.SaveChanges();
+                return new();
+            }
+            return new ResponseBase()
+            {
+                StatusCode = HttpStatusCode.NotFound,
+                StatusMessage = "Could not find the file with the specified guid to restore"
+            };
         }
     }
 }
