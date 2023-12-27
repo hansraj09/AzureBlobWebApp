@@ -5,7 +5,7 @@ import Fab from '@mui/material/Fab';
 import DoneIcon from '@mui/icons-material/Done';
 import AzureBlobAPI from "../apis/AzureBlobAPI"
 import { toastOptions } from "../utils/Utils"
-import BinItem from "../components/BinItem";
+import BinItem from "../components/BinItem/BinItem";
 import { useNavigate } from "react-router-dom";
 
 const BinBrowser = () => {

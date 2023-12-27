@@ -67,14 +67,16 @@ namespace AzureBlobWebApp.DataLayer.Repositories
             };
             tblUser.Roles.Add(_userRole);
             _context.Users.Add(tblUser);
+            _context.SaveChanges();
 
+            var userId = GetUserIdFromUsername(userInfo.UserName);
             // add container
             Container tblContainer = new()
             {
                 ContainerName = userInfo.UserName,
                 LastModified = DateTime.Now,
-                ModifiedUserId = userInfo.UserId,
-                UserId = userInfo.UserId 
+                ModifiedUserId = userId,
+                UserId = userId 
             };
             _context.Containers.Add(tblContainer);
             _context.SaveChanges();
@@ -229,6 +231,7 @@ namespace AzureBlobWebApp.DataLayer.Repositories
             if (fileToDelete != null)
             {
                 fileToDelete.IsDeleted = true;
+                fileToDelete.LastModified = DateTime.Now;
                 _context.SaveChanges();
                 return new();
             }
@@ -268,6 +271,7 @@ namespace AzureBlobWebApp.DataLayer.Repositories
             if (fileToRestore != null)
             {
                 fileToRestore.IsDeleted = false;
+                fileToRestore.LastModified = DateTime.Now;
                 _context.SaveChanges();
                 return new();
             }

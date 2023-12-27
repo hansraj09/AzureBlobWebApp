@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Collapse, Navbar, NavbarBrand, NavbarToggler, UncontrolledDropdown, DropdownToggle, DropdownItem, DropdownMenu } from 'reactstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
-import { GetRolesFromToken, GetUsernameFromToken, stringAvatar } from '../utils/Utils';
+import { GetRolesFromToken, GetUsernameFromToken, stringAvatar } from '../../utils/Utils';
 import './NavMenu.css';
 
 const NavMenu = () => {

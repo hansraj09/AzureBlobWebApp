@@ -4,7 +4,7 @@ import AppRoutes from './AppRoutes';
 import './custom.css';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import NavMenu from './components/NavMenu';
+import NavMenu from './components/NavMenu/NavMenu';
 
 const App = () => {
   return (
@@ -19,6 +19,7 @@ const App = () => {
           </>
         }>
           {AppRoutes.map((route, index) => {
+
             const { element, ...rest } = route;
             return <Route key={index} {...rest} element={element} />;
           })}

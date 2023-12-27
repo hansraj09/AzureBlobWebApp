@@ -5,9 +5,9 @@ import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 import AzureBlobAPI from "../apis/AzureBlobAPI"
 import { toastOptions } from "../utils/Utils"
-import FileItem from "../components/FileItem"
-import VisuallyHiddenInput from "../components/VisuallyHiddenInput";
-import RecycleBin from "../components/RecycleBin";
+import FileItem from "../components/FileItem/FileItem"
+import VisuallyHiddenInput from "../components/VisuallyHiddenInput/VisuallyHiddenInput";
+import RecycleBin from "../components/RecycleBin/RecycleBin";
 
 const FileBrowser = () => {
 
