@@ -1,0 +1,104 @@
+  .btn {
+    padding: 0.5em 2.5em;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    background-color: #191442;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+  }
+  
+  .btn.active {
+    background-color: #191442;
+    color: #fff;
+  }
+  
+  
+  .heading,
+  .drag {
+    font-weight: 600;
+    color: #191442;
+  }
+  
+  .drag {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    cursor: pointer;
+  }
+  
+  .drag .browse {
+    display: inline-block;
+    color: #fe8d57;
+  }
+  
+  .file-label {
+    cursor: pointer;
+  }
+  
+  .instruction,
+  .info {
+    color: #6f6c78;
+  }
+  
+  .heading {
+    font-size: 25px;
+  }
+  
+  .instruction {
+    margin-top: 0.5rem;
+    margin-bottom: 2rem;
+    font-size: 14px;
+  }
+  
+  .drag {
+    font-size: 18px;
+  }
+  
+  .info {
+    font-size: 12px;
+  }
+  
+  .btn-container {
+    display: flex;
+    border: solid 0.1px;
+    border-radius: 5px;
+  }
+  
+  .uploadBox,
+  .signBox {
+    padding: 2em;
+    border: 2px dashed #7866e3;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  
+  /* Tab Container */
+  
+  .Tabs {
+    width: 100%;
+    height: auto;
+    min-height: 300px;
+    border-radius: 2rem;
+  }
+  
+  .upload-icon {
+    font-size: 2em;
+    color: #7866e3;
+  }
+  
+  .fileIcon {
+    display: none;
+  }
+  
+  .filename {
+    font-size: 12px;
+  }
+  

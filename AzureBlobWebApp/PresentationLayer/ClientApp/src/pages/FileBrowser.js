@@ -2,22 +2,36 @@ import { useEffect, useState } from "react"
 import { toast, ToastContainer } from "react-toastify"
 import { Spinner } from 'react-bootstrap'
 import Fab from '@mui/material/Fab';
+import TextField from "@mui/material/TextField";
 import AddIcon from '@mui/icons-material/Add';
 import AzureBlobAPI from "../apis/AzureBlobAPI"
 import { toastOptions } from "../utils/Utils"
 import FileItem from "../components/FileItem/FileItem"
-import VisuallyHiddenInput from "../components/VisuallyHiddenInput/VisuallyHiddenInput";
 import RecycleBin from "../components/RecycleBin/RecycleBin";
+import UploadModal from "../components/UploadModal/UploadModal";
 
 const FileBrowser = () => {
 
     const [files, setFiles] = useState([])
+    const [filteredFiles, setFilteredFiles] = useState([])
     const [numDeleted, setNumDeleted] = useState(0)
     const [loading, setLoading] = useState(false)
+    const [openModal, setOpenModal] = useState(false)
+    const [search, setSearch] = useState("")
+
+    const toggleModal = () => setOpenModal(!openModal)
 
     useEffect(() => {
         fetchData()
     }, [])
+
+    useEffect(() => {
+        const searchedFiles = files.filter((f) => {
+            if (search === "") return true
+            return f.fileName.toLowerCase().includes(search)
+        })
+        setFilteredFiles(searchedFiles)
+    }, [search])
 
     async function fetchData() {
         try {
@@ -27,6 +41,7 @@ const FileBrowser = () => {
             const validFiles = response.filter((f) => !f.isDeleted)
             const numDeleted = response.length - validFiles.length
             setFiles(validFiles)
+            setFilteredFiles(validFiles)
             setNumDeleted(numDeleted)
         } catch (error) {
             setLoading(false)
@@ -34,10 +49,19 @@ const FileBrowser = () => {
         }
     }
 
-    const onUpload = async (e) => {
-        const fileToUpload = e.target.files[0]
+    const onSearch = (e) => {
+        //convert input text to lower case
+        var lowerCase = e.target.value.toLowerCase();
+        setSearch(lowerCase);
+    };
+
+    const onUpload = async (file, description) => {
         const formdata = new FormData();
-        formdata.append("file", fileToUpload)
+        if (description === "") {
+            description = "No description"
+        }
+        formdata.append("file", file)
+        formdata.append("description", description)
         try {
             setLoading(true)
             await AzureBlobAPI.upload(formdata)
@@ -86,17 +110,27 @@ const FileBrowser = () => {
     return (
         <>
             <div className="d-flex flex-col w-100 vh-100 flex-wrap">
+                <div className="d-flex flex-row justify-content-center w-100 mx-5">
+                    <TextField
+                        id="outlined-basic"
+                        variant="outlined"
+                        fullWidth
+                        label="Search"
+                        onChange={onSearch}
+                        sx={{width: '50%', height: 'auto'}}
+                    />
+                </div>
                 {(files === null || files.length === 0) ? (
                     <p className="d-flex flex-row justify-content-center vh-100 w-100 fs-1 align-items-center">No files found</p>
-                ) : (
-                    <>
-                        {files.map((file, index) => 
-                            <FileItem key={index} fileItem={file} onDelete={onDelete} onDownload={onDownload} />
-                        )}
-                        <RecycleBin number={numDeleted} />                   
-                    </>                   
+                ) : (                       
+                        <>
+                            {filteredFiles.map((file, index) => 
+                                <FileItem key={index} fileItem={file} onDelete={onDelete} onDownload={onDownload} />
+                            )}
+                            <RecycleBin number={numDeleted} />                   
+                        </>                   
                 )}
-                <Fab color="primary" component="label" aria-label="add" sx={{
+                <Fab color="primary" component="label" onClick={toggleModal} aria-label="add" sx={{
                     position: "fixed",
                     bottom: (theme) => theme.spacing(2),
                     right: (theme) => theme.spacing(2)
@@ -112,7 +146,11 @@ const FileBrowser = () => {
                     ) : (
                         <>
                             <AddIcon />
-                            <VisuallyHiddenInput type="file" onChange={onUpload} />
+                            <UploadModal 
+                                open={openModal} 
+                                toggleModal={toggleModal} 
+                                onUpload={onUpload} />
+                            {/* <VisuallyHiddenInput type="file" onChange={onUpload} /> */}
                         </>
                         
                     )}

@@ -11,9 +11,16 @@ import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import ConfigurationAPI from '../apis/ConfigurationAPI';
 
-const Settings = () => {
+export const DEFAULT_MAX_SIZE = 20
 
-    const DEFAULT_MAX_SIZE = 20
+export const typeList = [
+    'text',
+    'image',
+    'video',
+    'all'
+]
+
+const Settings = () => {
 
     const [maxAllowedSizeInMB, setMaxAllowedSizeInMB] = useState(DEFAULT_MAX_SIZE)
     const [types, setTypes] = useState([]);
@@ -40,13 +47,6 @@ const Settings = () => {
             toast.error(error?.response?.data || error.message, toastOptions)
         }
     }
-
-    const typeList = [
-        'text',
-        'image',
-        'video',
-        'all'
-    ]
 
     const onSizeChanged = (e) => {
         // test for numerical value only

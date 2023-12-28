@@ -7,7 +7,7 @@ namespace AzureBlobWebApp.BusinessLayer.Interfaces
     {
         Task CreateContainerIfNotExistsAsync(string userName);
         List<Blob> GetAllBlobs(string username);
-        Task<BlobResponse> UploadAsync(string username, IFormFile file);
+        Task<BlobResponse> UploadAsync(string username, UploadFile fileInfo);
         Task<DownloadFile?> DownloadAsync(string blobName, string username);
         ResponseBase Delete(string blobName);
         Task<ResponseBase> PermanentDelete(string blobName, string username);
