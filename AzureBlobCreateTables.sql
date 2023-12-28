@@ -43,6 +43,7 @@ CREATE TABLE [File] (
 	LastModified datetime NOT NULL,
 	ModifiedUserID int NULL,
 	ContainerID int NOT NULL,
+	GUID varchar(100) NOT NULL,
 	constraint PK_File_FileID primary key (FileID),
 	constraint FK_File_ContainerID foreign key (ContainerID) references [Container] (ContainerID)
 	ON UPDATE CASCADE
@@ -94,6 +95,7 @@ CREATE TABLE [Configuration] (
 	ConfigName nvarchar(20) NOT NULL,
 	LastModified datetime NOT NULL,
 	ModifiedUserID int NULL,
+	ConfigValue varchar(500) NULL,
 	constraint PK_Configuration_ConfigID primary key (ConfigID)
 )
 
@@ -115,6 +117,9 @@ insert [Role] (RoleName, LastModified) values ('admin', GETDATE())
 insert [UserRole] values (1, 1)
 insert [Role] (RoleName, LastModified) values ('user', GETDATE())
 insert [UserRole] values (2, 2)
+insert [Container] (ContainerName, LastModified, ModifiedUserId, UserID) values ('adminuser', GETDATE(), 1, 1)
+insert [Configuration] (ConfigName, LastModified, ModifiedUserID, ConfigValue) values ('maxSize', GETDATE(), 1, '20')
+insert [Configuration] (ConfigName, LastModified, ModifiedUserID, ConfigValue) values ('allowedTypes', GETDATE(), 1, '"["all"]"')
 
 select * from [User]
 select * from [Role]
@@ -126,4 +131,5 @@ select * from [RoleAuthorization]
 select * from [Configuration]
 select * from [Authorization]
 
-delete from [User] where UserID in (4, 5, 6)
+delete from [User] where UserID in (2, 3)
+delete from [Configuration] where ConfigValue = 'all'
