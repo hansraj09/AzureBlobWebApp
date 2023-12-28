@@ -6,7 +6,6 @@ import AddIcon from '@mui/icons-material/Add';
 import AzureBlobAPI from "../apis/AzureBlobAPI"
 import { toastOptions } from "../utils/Utils"
 import FileItem from "../components/FileItem/FileItem"
-import VisuallyHiddenInput from "../components/VisuallyHiddenInput/VisuallyHiddenInput";
 import RecycleBin from "../components/RecycleBin/RecycleBin";
 import UploadModal from "../components/UploadModal/UploadModal";
 
@@ -38,10 +37,9 @@ const FileBrowser = () => {
         }
     }
 
-    const onUpload = async (e) => {
-        const fileToUpload = e.target.files[0]
+    const onUpload = async (file) => {
         const formdata = new FormData();
-        formdata.append("file", fileToUpload)
+        formdata.append("file", file)
         try {
             setLoading(true)
             await AzureBlobAPI.upload(formdata)
@@ -116,7 +114,10 @@ const FileBrowser = () => {
                     ) : (
                         <>
                             <AddIcon />
-                            <UploadModal open={openModal} toggleModal={toggleModal} onUpload={onUpload} />
+                            <UploadModal 
+                                open={openModal} 
+                                toggleModal={toggleModal} 
+                                onUpload={onUpload} />
                             {/* <VisuallyHiddenInput type="file" onChange={onUpload} /> */}
                         </>
                         
