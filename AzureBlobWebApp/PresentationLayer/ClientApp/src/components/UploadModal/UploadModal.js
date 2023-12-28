@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import { Spinner } from 'react-bootstrap'
 import { toast, ToastContainer } from 'react-toastify';
+import TextField from '@mui/material/TextField';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { DEFAULT_MAX_SIZE, typeList } from '../../pages/Settings';
 import ConfigurationAPI from '../../apis/ConfigurationAPI';
@@ -10,11 +11,12 @@ import './UploadModal.css'
 
 const UploadModal = (props) => {
 
-    const [file, setFile] = useState(null);   
-    const [dragActive, setDragActive] = useState(false);
-    const [msg, setMsg] = useState("");
+    const [file, setFile] = useState(null)
+    const [dragActive, setDragActive] = useState(false)
+    const [msg, setMsg] = useState("")
     const [maxAllowedSizeInMB, setMaxAllowedSizeInMB] = useState(DEFAULT_MAX_SIZE)
     const [types, setTypes] = useState([]);
+    const [description, setDescription] = useState("")
     const [loading, setLoading] = useState(false)
 
     const fetchConfig = async () => {
@@ -117,6 +119,7 @@ const UploadModal = (props) => {
         <ModalHeader toggle={() => {
           setFile(null)
           setMsg("")
+          setDescription("")
           props.toggleModal()
         }}>
           Upload File
@@ -147,12 +150,26 @@ const UploadModal = (props) => {
 
                     <p className="info">{`Max Size: ${maxAllowedSizeInMB}, Supported types: ${types.toString()}`}</p>
                 </form>
+                <div className='my-4 mx-2'>
+                  <TextField
+                    id="outlined-multiline-static"
+                    label="Description"
+                    multiline
+                    maxRows={4}
+                    placeholder="Optional"
+                    value={description}
+                    onChange={(e) => {
+                      setDescription(e.target.value)
+                    }}
+                    fullWidth
+                  />
+                </div>
             </div>
         </ModalBody>
         <ModalFooter>
             <Button color="primary" disabled={loading || file === null} onClick={() => {
                 props.toggleModal()
-                props.onUpload(file)
+                props.onUpload(file, description)
             }}>
                 {loading ? (
                     <Spinner
@@ -169,6 +186,7 @@ const UploadModal = (props) => {
             <Button color="secondary" onClick={() => {
               setFile(null)
               setMsg("")
+              setDescription("")
               props.toggleModal()
             }} >
                 Cancel

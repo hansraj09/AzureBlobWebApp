@@ -37,9 +37,10 @@ const FileBrowser = () => {
         }
     }
 
-    const onUpload = async (file) => {
+    const onUpload = async (file, description) => {
         const formdata = new FormData();
         formdata.append("file", file)
+        formdata.append("description", description)
         try {
             setLoading(true)
             await AzureBlobAPI.upload(formdata)

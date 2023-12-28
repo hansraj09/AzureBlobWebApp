@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using AzureBlobWebApp.BusinessLayer.DTOs;
 using AzureBlobWebApp.BusinessLayer.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -53,7 +54,7 @@ namespace AzureBlobWebApp.API.Controllers
         [HttpPost]
         [Authorize]
         [Route("Upload")]
-        public async Task<IActionResult> Upload([FromForm] IFormFile file)
+        public async Task<IActionResult> Upload([FromForm] UploadFile fileInfo)
         {
             var token = await HttpContext.GetTokenAsync("access_token");
             var username = _tokenService.GetUsername(token);
@@ -62,13 +63,16 @@ namespace AzureBlobWebApp.API.Controllers
                 return Unauthorized();
             }
             // look into chunks upload
-            var response = await _azureBlobService.UploadAsync(username, file);
+            var response = await _azureBlobService.UploadAsync(username, fileInfo);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 return Ok(response);
             } else if (response.StatusCode == HttpStatusCode.InternalServerError)
             {
                 return StatusCode(500, "Upload failed");
+            } else if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                return BadRequest(response.StatusMessage);
             } 
             return BadRequest(response);
         }

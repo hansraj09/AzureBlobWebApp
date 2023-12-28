@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text.Json;
 using Azure;
 using Azure.Storage;
 using Azure.Storage.Blobs;
@@ -37,59 +38,65 @@ namespace AzureBlobWebApp.BusinessLayer.Services
         public List<Blob> GetAllBlobs(string username)
         {
             var dbFiles = _dataRepository.GetFiles(username);
-            return dbFiles;
-
-            /*try
-            {
-                await CreateContainerIfNotExistsAsync(username);
-                var blobContainerClient = _blobServiceClient.GetBlobContainerClient(username);
-                List<Blob> files = new List<Blob>();
-                string containerUri = blobContainerClient.Uri.ToString();
-
-                await foreach (var file in blobContainerClient.GetBlobsAsync())
-                {
-                    files.Add(new Blob
-                    {
-                        Uri = $"{blobContainerClient.Uri}/{file.Name}",
-                        Name = file.Name,
-                        ContentType = file.Properties.ContentType
-                    });
-                }
-                return files;
-            }
-            catch (Azure.RequestFailedException ex)
-            {
-                _logger.Log(LogLevel.Error, ex.Message);
-                return null;
-            } */           
+            return dbFiles;           
         }
 
-        public async Task<BlobResponse> UploadAsync(string username, IFormFile file)
+        private bool ValidateFileBeforeUpload(IFormFile file)
+        {
+            var configs = _dataRepository.GetConfigurations().ToArray();
+            var maxSize = configs[0].ConfigValue;
+            var allowedTypes = configs[1].ConfigValue;
+            var deserializedTypes = JsonSerializer.Deserialize<List<string>>(allowedTypes);
+            if (file.Length > (int.Parse(maxSize) * 1024 * 1024))
+            {
+                return false;
+            }
+            foreach (var type in deserializedTypes)
+            {
+                if (file.ContentType.Contains(type))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public async Task<BlobResponse> UploadAsync(string username, UploadFile fileInfo)
         {
             try
             {
+                if (!ValidateFileBeforeUpload(fileInfo.file))
+                {
+                    _logger.Log(LogLevel.Error, "File to be uploaded does not match config values set");
+                    return new()
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        StatusMessage = "File to be uploaded does not meet criteria"
+                    };
+                }
                 await CreateContainerIfNotExistsAsync(username);
                 var container = _blobServiceClient.GetBlobContainerClient(username);
                 string guid = Guid.NewGuid().ToString();
                 BlobClient client = container.GetBlobClient(guid);
 
-                await using (Stream? data = file.OpenReadStream())
+                await using (Stream? data = fileInfo.file.OpenReadStream())
                 {
                     await client.UploadAsync(data);
                 }
 
-                File fileInfo = new()
+                File fileDetails = new()
                 {
-                    FileName = file.FileName,
-                    Type = file.ContentType,
-                    Size = file.Length,
+                    FileName = fileInfo.file.FileName,
+                    Type = fileInfo.file.ContentType,
+                    Size = fileInfo.file.Length,
                     LastModified = DateTime.Now,
                     GUID = guid,
                     IsDeleted = false,
-                    IsPublic = false
+                    IsPublic = false,
+                    Description = fileInfo.description
                 };
 
-                var dbResponse = _dataRepository.AddFile(username, fileInfo);
+                var dbResponse = _dataRepository.AddFile(username, fileDetails);
                 if (dbResponse.StatusCode == HttpStatusCode.NoContent)
                 {
                     _logger.Log(LogLevel.Error, dbResponse.StatusMessage);
